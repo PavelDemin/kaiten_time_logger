@@ -17,7 +17,7 @@
 
 ```bash
 # Клонируем репозиторий
-git clone
+git clone https://github.com/PavelDemin/kaiten_time_logger
 
 # Устанавливаем зависимости
 pip install uv
