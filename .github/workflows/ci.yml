@@ -1,0 +1,73 @@
+name: CI/CD
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install uv
+        uv pip install -r requirements.txt
+    
+    - name: Lint with ruff
+      run: |
+        ruff check .
+        ruff format --check .
+    
+    - name: Test with pytest
+      run: |
+        pytest
+        
+  build:
+    needs: test
+    runs-on: windows-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.12
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+        cache: 'pip'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install uv
+        uv pip install -r requirements.txt
+        pip install pyinstaller
+    
+    - name: Build with PyInstaller
+      run: |
+        pyinstaller --name kaiten_time_logger `
+                   --windowed `
+                   --onefile `
+                   --icon src/logo.png `
+                   --add-data "src/logo.png;." `
+                   src/main.py
+    
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: kaiten-time-logger
+        path: dist/kaiten_time_logger.exe 

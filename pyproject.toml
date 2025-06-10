@@ -1,0 +1,37 @@
+[project]
+name = "kaiten-work-time-alert"
+version = "0.1.0"
+description = "Windows application for tracking work time in Kaiten based on git commits"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "pillow>=10.0.0",
+    "pystray>=0.19.4",
+    "schedule>=1.2.0",
+    "gitpython>=3.1.42",
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.1",
+    "workalendar>=17.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "ruff>=0.2.0",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint]
+select = [
+    "E",
+    "W",
+    "F",
+    "I",
+    "B",
+]
+
+[tool.ruff.format]
+quote-style = 'single'
