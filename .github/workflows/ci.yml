@@ -30,8 +30,8 @@ jobs:
     
     - name: Lint with ruff
       run: |
-        ruff check .
-        ruff format --check .
+        ruff check --config pyproject.toml .
+        ruff format --config pyproject.toml --check .
     
     - name: Test with pytest
       run: |
