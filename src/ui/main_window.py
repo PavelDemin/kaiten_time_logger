@@ -8,15 +8,15 @@ import pystray
 import schedule
 from PIL import Image
 
-from ..core.config import config
-from ..core.git_manager import GitManager
-from ..core.kaiten_api import KaitenAPI
-from ..core.work_calendar import WorkCalendar
-from ..logger import logger
-from .components import BranchTimeEntry, ScrollableFrame
-from .settings_window import SettingsWindow
+from src.core.config import config
+from src.core.git_manager import GitManager
+from src.core.kaiten_api import KaitenAPI
+from src.core.work_calendar import WorkCalendar
+from src.utils.logger import logger
+from src.ui.components import BranchTimeEntry, ScrollableFrame
+from src.ui.settings_window import SettingsWindow
 
-LOGO_PATH = Path(__file__).parent.parent / 'clock.png'
+LOGO_PATH = Path(__file__).parent.parent / 'static\\clock.png'
 
 
 class Application:

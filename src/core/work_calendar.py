@@ -1,12 +1,12 @@
 from datetime import date, datetime
 from typing import Optional
 
-from workalendar.europe import Russia
+import holidays
 
 
 class WorkCalendar:
     def __init__(self):
-        self.calendar = Russia()
+        self.calendar = holidays.country_holidays('Russia')
 
     def is_working_day(self, date_to_check: Optional[date] = None) -> bool:
         date_to_check = date_to_check or date.today()

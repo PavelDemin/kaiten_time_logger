@@ -2,7 +2,7 @@ from datetime import datetime
 
 import requests
 
-from ..logger import logger
+from src.utils.logger import logger
 
 
 class KaitenAPI:

@@ -3,7 +3,7 @@ import webbrowser
 from tkinter import ttk
 from typing import List, Tuple
 
-from ..core.config import config
+from src.core.config import config
 
 
 class ScrollableFrame(ttk.Frame):
