@@ -22,7 +22,6 @@ LOGO_PATH = Path(__file__).parent.parent / 'static\\clock.png'
 class Application:
     def __init__(self):
         self.window_visible = False
-        logger.info('Инициализация приложения...')
 
         try:
             self.icon_image = Image.open(LOGO_PATH)
@@ -104,7 +103,7 @@ class Application:
         )
 
     def setup_scheduler(self):
-        schedule.every(1).minutes.do(self.check_notification_time)
+        schedule.every(30).seconds.do(self.check_notification_time)
         scheduler_thread = threading.Thread(
             target=self.run_scheduler,
             daemon=True,

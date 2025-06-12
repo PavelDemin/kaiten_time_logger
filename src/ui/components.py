@@ -52,13 +52,14 @@ class BranchTimeEntry(ttk.Frame):
     """Виджет для ввода времени, потраченного на работу в ветке."""
 
     def __init__(self, parent: ScrollableFrame, branch_name: str, card_id: str, commits: List[str]):
+        self.card_id = card_id
         super().__init__()
 
         self.frame = tk.Frame(
             parent.scrollable_frame,
             borderwidth=1,
             relief='solid',
-            bg='#ffffff',  # Белый фон для карточки
+            bg='#ffffff',
         )
         self.frame.pack(fill=tk.X, padx=10, pady=7, ipady=10)
         self.frame.columnconfigure(0, weight=1)
@@ -77,7 +78,7 @@ class BranchTimeEntry(ttk.Frame):
 
         card_label = tk.Label(
             card_frame,
-            text=f'#{card_id}',
+            text=f'#{self.card_id}',
             font=('Segoe UI', 10),
             fg='#0066cc',
             cursor='hand2',
@@ -85,7 +86,7 @@ class BranchTimeEntry(ttk.Frame):
         card_label.pack()
 
         def open_card(event):
-            webbrowser.open(f'{config.kaiten_url}/{card_id}')
+            webbrowser.open(f'{config.kaiten_url}/{self.card_id}')
 
         card_label.bind('<Button-1>', open_card)
 
@@ -127,9 +128,5 @@ class BranchTimeEntry(ttk.Frame):
         time_entry = ttk.Entry(time_frame, textvariable=self.time_var, width=10, font=('Segoe UI', 10))
         time_entry.pack(side=tk.LEFT, padx=5)
 
-    def get_values(self) -> Tuple[str, str]:
-        commits_text = self.commits_text.get('1.0', tk.END).strip()
-        return self.time_var.get(), commits_text
-
     def get_data(self) -> Tuple[str, str, str]:
-        pass
+        return self.card_id, self.time_var.get(), self.commits_text.get('1.0', tk.END).strip()
