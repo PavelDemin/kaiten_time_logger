@@ -13,7 +13,7 @@ from src.core.git_manager import GitManager
 from src.core.kaiten_api import KaitenAPI
 from src.core.work_calendar import WorkCalendar
 from src.utils.logger import logger
-from src.ui.components import BranchTimeEntry, ScrollableFrame
+from src.ui.components import BranchTimeEntry, ScrollableFrame, ManualTimeEntry
 from src.ui.settings_window import SettingsWindow
 
 LOGO_PATH = Path(__file__).parent.parent / 'static\\clock.png'
@@ -71,6 +71,7 @@ class Application:
         self.loading_label.pack(pady=10)
 
         self.main_frame = ScrollableFrame(self.root)
+        self.manual_entry = ManualTimeEntry(self.main_frame)
 
         self.buttons_frame = ttk.Frame(self.root, style='Main.TFrame')
 
@@ -170,6 +171,7 @@ class Application:
         success_count = 0
         error_count = 0
 
+        # Сохраняем записи из веток
         for entry in self.branch_entries:
             card_id, time_spent, description = entry.get_data()
             if time_spent and float(time_spent) > 0:
@@ -183,6 +185,20 @@ class Application:
                 except Exception as e:
                     error_count += 1
                     logger.error(f'Ошибка при сохранении времени для карточки {card_id}: {e}')
+
+        # Сохраняем ручную запись
+        card_id, time_spent, description = self.manual_entry.get_data()
+        if card_id and time_spent and description:
+            try:
+                if self.kaiten_api.add_time_log(card_id, time_spent, description):
+                    success_count += 1
+                    logger.debug(f'Успешно сохранено время для ручной записи карточки {card_id}')
+                else:
+                    error_count += 1
+                    logger.error(f'Не удалось сохранить время для ручной записи карточки {card_id}')
+            except Exception as e:
+                error_count += 1
+                logger.error(f'Ошибка при сохранении времени для ручной записи карточки {card_id}: {e}')
 
         if success_count > 0:
             message = f'Время успешно записано для {success_count} задач.'

@@ -1,6 +1,6 @@
 import tkinter as tk
 import webbrowser
-from tkinter import ttk
+from tkinter import ttk, messagebox
 from typing import List, Tuple
 
 from src.core.config import config
@@ -130,3 +130,95 @@ class BranchTimeEntry(ttk.Frame):
 
     def get_data(self) -> Tuple[str, str, str]:
         return self.card_id, self.time_var.get(), self.commits_text.get('1.0', tk.END).strip()
+
+
+class ManualTimeEntry(ttk.Frame):
+    """Виджет для ручного добавления записи времени."""
+
+    def __init__(self, parent: ScrollableFrame):
+        super().__init__()
+
+        self.frame = tk.Frame(
+            parent.scrollable_frame,
+            borderwidth=1,
+            relief='solid',
+            bg='#ffffff',
+        )
+        self.frame.pack(fill=tk.X, padx=10, pady=7, ipady=10)
+        self.frame.columnconfigure(0, weight=1)
+
+        # Заголовок
+        header_frame = ttk.Frame(self.frame)
+        header_frame.grid(row=0, column=0, sticky='ew', padx=15, pady=(10, 5))
+        header_frame.columnconfigure(1, weight=1)
+
+        header_label = ttk.Label(header_frame, text='➕ Новая запись', font=('Segoe UI', 11, 'bold'))
+        header_label.grid(row=0, column=0, sticky='w')
+
+        # Поля ввода
+        input_frame = ttk.Frame(self.frame)
+        input_frame.grid(row=1, column=0, sticky='ew', padx=15, pady=(5, 10))
+        input_frame.columnconfigure(1, weight=1)
+
+        # ID карточки
+        card_label = ttk.Label(input_frame, text='ID карточки:', font=('Segoe UI', 10))
+        card_label.grid(row=0, column=0, sticky='w', pady=5)
+        self.card_id_var = tk.StringVar()
+        card_entry = ttk.Entry(input_frame, textvariable=self.card_id_var, width=10, font=('Segoe UI', 10))
+        card_entry.grid(row=0, column=1, sticky='w', padx=5, pady=5)
+
+        # Описание
+        desc_label = ttk.Label(input_frame, text='Описание:', font=('Segoe UI', 10))
+        desc_label.grid(row=1, column=0, sticky='w', pady=5)
+        self.desc_text = tk.Text(input_frame, height=3, wrap=tk.WORD, font=('Segoe UI', 10))
+        self.desc_text.grid(row=1, column=1, sticky='ew', padx=5, pady=5)
+
+        # Время
+        time_label = ttk.Label(input_frame, text='Время:', font=('Segoe UI', 10))
+        time_label.grid(row=2, column=0, sticky='w', pady=5)
+        self.time_var = tk.StringVar()
+        time_entry = ttk.Entry(input_frame, textvariable=self.time_var, width=10, font=('Segoe UI', 10))
+        time_entry.grid(row=2, column=1, sticky='w', padx=5, pady=5)
+
+        # Кнопка добавления
+        add_button = ttk.Button(
+            input_frame,
+            text='Добавить',
+            command=self.add_entry,
+            style='Main.TButton',
+        )
+        add_button.grid(row=3, column=1, sticky='e', pady=10)
+
+    def add_entry(self):
+        """Обработчик нажатия кнопки добавления."""
+        card_id = self.card_id_var.get().strip()
+        description = self.desc_text.get('1.0', tk.END).strip()
+        time_spent = self.time_var.get().strip()
+
+        if not all([card_id, description, time_spent]):
+            messagebox.showwarning('Предупреждение', 'Пожалуйста, заполните все поля')
+            return
+
+        try:
+            hours, minutes = map(int, time_spent.split('.'))
+            if not (0 <= hours <= 24 and 0 <= minutes <= 59):
+                raise ValueError
+        except ValueError:
+            messagebox.showwarning('Предупреждение', 'Время должно быть в формате ЧЧ.ММ')
+            return
+
+        # Здесь будет обработка добавления записи
+        # TODO: Добавить callback для обработки добавления записи
+
+        # Очистка полей после добавления
+        self.card_id_var.set('')
+        self.desc_text.delete('1.0', tk.END)
+        self.time_var.set('')
+
+    def get_data(self) -> Tuple[str, str, str]:
+        """Возвращает данные из полей ввода."""
+        return (
+            self.card_id_var.get().strip(),
+            self.time_var.get().strip(),
+            self.desc_text.get('1.0', tk.END).strip(),
+        )
