@@ -1,7 +1,7 @@
 import tkinter as tk
 import webbrowser
-from tkinter import ttk, messagebox
-from typing import List, Tuple
+from tkinter import messagebox, ttk
+from typing import Callable, List, Tuple
 
 from src.core.config import config
 
@@ -51,7 +51,7 @@ class ScrollableFrame(ttk.Frame):
 class BranchTimeEntry(ttk.Frame):
     """Виджет для ввода времени, потраченного на работу в ветке."""
 
-    def __init__(self, parent: ScrollableFrame, branch_name: str, card_id: str, commits: List[str]):
+    def __init__(self, parent: ScrollableFrame, branch_name: str, card_id: int, commits: List[str]):
         self.card_id = card_id
         super().__init__()
 
@@ -128,15 +128,19 @@ class BranchTimeEntry(ttk.Frame):
         time_entry = ttk.Entry(time_frame, textvariable=self.time_var, width=10, font=('Segoe UI', 10))
         time_entry.pack(side=tk.LEFT, padx=5)
 
-    def get_data(self) -> Tuple[str, str, str]:
-        return self.card_id, self.time_var.get(), self.commits_text.get('1.0', tk.END).strip()
+    def get_data(self) -> Tuple[int, int, str]:
+        time_spent = self.time_var.get()
+        hours, minutes = map(int, time_spent.split('.'))
+        total_minutes = hours * 60 + minutes
+        return self.card_id, total_minutes, self.commits_text.get('1.0', tk.END).strip()
 
 
 class ManualTimeEntry(ttk.Frame):
     """Виджет для ручного добавления записи времени."""
 
-    def __init__(self, parent: ScrollableFrame):
+    def __init__(self, parent: ScrollableFrame, on_add_entry: Callable):
         super().__init__()
+        self.on_add_entry = on_add_entry
 
         self.frame = tk.Frame(
             parent.scrollable_frame,
@@ -195,10 +199,11 @@ class ManualTimeEntry(ttk.Frame):
         description = self.desc_text.get('1.0', tk.END).strip()
         time_spent = self.time_var.get().strip()
 
-        if not all([card_id, description, time_spent]):
+        if not all((card_id, description, time_spent)):
             messagebox.showwarning('Предупреждение', 'Пожалуйста, заполните все поля')
             return
-
+        if not card_id.isdigit():
+            messagebox.showwarning('Предупреждение', '"ID карточки" должно быть только числовым значением')
         try:
             hours, minutes = map(int, time_spent.split('.'))
             if not (0 <= hours <= 24 and 0 <= minutes <= 59):
@@ -207,18 +212,7 @@ class ManualTimeEntry(ttk.Frame):
             messagebox.showwarning('Предупреждение', 'Время должно быть в формате ЧЧ.ММ')
             return
 
-        # Здесь будет обработка добавления записи
-        # TODO: Добавить callback для обработки добавления записи
-
-        # Очистка полей после добавления
+        self.on_add_entry(int(card_id), time_spent, description)
         self.card_id_var.set('')
         self.desc_text.delete('1.0', tk.END)
         self.time_var.set('')
-
-    def get_data(self) -> Tuple[str, str, str]:
-        """Возвращает данные из полей ввода."""
-        return (
-            self.card_id_var.get().strip(),
-            self.time_var.get().strip(),
-            self.desc_text.get('1.0', tk.END).strip(),
-        )

@@ -24,11 +24,11 @@ class GitManager:
         return commits_by_branch
 
     @staticmethod
-    def _extract_card_id(branch_name: str) -> Optional[str]:
+    def _extract_card_id(branch_name: str) -> Optional[int]:
         match = re.search(r'[^-]+-(\d+)', branch_name)
-        return match.group(1) if match else None
+        return int(match.group(1)) if match else 0
 
-    def get_branches_with_commits(self) -> List[Tuple[str, str, List[str]]]:
+    def get_branches_with_commits(self) -> List[Tuple[str, int, List[str]]]:
         result = []
         commits_by_branch = self._get_todays_commits()
         for branch_name, commits in commits_by_branch.items():

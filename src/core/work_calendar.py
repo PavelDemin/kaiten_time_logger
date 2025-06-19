@@ -19,7 +19,7 @@ class WorkCalendar:
         try:
             target_hour, target_minute = map(int, notification_time.split(':'))
             current_time = datetime.now().time()
-            return current_time.hour == target_hour and  current_time.minute == target_minute
+            return current_time.hour == target_hour and current_time.minute == target_minute
 
         except ValueError:
             return False

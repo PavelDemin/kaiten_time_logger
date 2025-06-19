@@ -12,9 +12,9 @@ from src.core.config import config
 from src.core.git_manager import GitManager
 from src.core.kaiten_api import KaitenAPI
 from src.core.work_calendar import WorkCalendar
-from src.utils.logger import logger
-from src.ui.components import BranchTimeEntry, ScrollableFrame, ManualTimeEntry
+from src.ui.components import BranchTimeEntry, ManualTimeEntry, ScrollableFrame
 from src.ui.settings_window import SettingsWindow
+from src.utils.logger import logger
 
 LOGO_PATH = Path(__file__).parent.parent / 'static\\clock.png'
 
@@ -36,7 +36,7 @@ class Application:
         try:
             self.work_calendar = WorkCalendar()
             self.git_manager = GitManager(config.git_repo_path)
-            self.kaiten_api = KaitenAPI(config.kaiten_token)
+            self.kaiten_api = KaitenAPI(config.kaiten_token, config.kaiten_url)
         except Exception as e:
             logger.error(f'Ошибка при инициализации менеджеров: {e}')
             messagebox.showerror('Ошибка', 'Не удалось инициализировать приложение. Проверьте настройки.')
@@ -71,7 +71,7 @@ class Application:
         self.loading_label.pack(pady=10)
 
         self.main_frame = ScrollableFrame(self.root)
-        self.manual_entry = ManualTimeEntry(self.main_frame)
+        self.manual_entry = ManualTimeEntry(self.main_frame, on_add_entry=self._add_manual_branch_entry)
 
         self.buttons_frame = ttk.Frame(self.root, style='Main.TFrame')
 
@@ -115,6 +115,16 @@ class Application:
         while True:
             schedule.run_pending()
             threading.Event().wait(30)
+
+    def _add_manual_branch_entry(self, card_id: int, time_spent: str, description: str):
+        entry = BranchTimeEntry(
+            self.main_frame,
+            branch_name=str(card_id),
+            card_id=card_id,
+            commits=[description] if description else [],
+        )
+        entry.time_var.set(time_spent)
+        self.branch_entries.append(entry)
 
     def check_notification_time(self):
         if not self.window_visible and self.work_calendar.should_show_notification(config.notification_time):
@@ -185,30 +195,15 @@ class Application:
                 except Exception as e:
                     error_count += 1
                     logger.error(f'Ошибка при сохранении времени для карточки {card_id}: {e}')
-
-        # Сохраняем ручную запись
-        card_id, time_spent, description = self.manual_entry.get_data()
-        if card_id and time_spent and description:
-            try:
-                if self.kaiten_api.add_time_log(card_id, time_spent, description):
-                    success_count += 1
-                    logger.debug(f'Успешно сохранено время для ручной записи карточки {card_id}')
-                else:
-                    error_count += 1
-                    logger.error(f'Не удалось сохранить время для ручной записи карточки {card_id}')
-            except Exception as e:
-                error_count += 1
-                logger.error(f'Ошибка при сохранении времени для ручной записи карточки {card_id}: {e}')
-
         if success_count > 0:
             message = f'Время успешно записано для {success_count} задач.'
             if error_count > 0:
-                message += f'\nОшибка записи времени для {error_count} задач.'
+                message += f'\nОшибка записи времени для {error_count} задач'
             logger.info(message)
             messagebox.showinfo('Успешно', message)
             self.hide_window()
         else:
-            error_message = 'Ошибка записи времени. Проверьте настройки и попробуйте снова.'
+            error_message = 'Ошибка записи времени. Проверьте настройки и попробуйте снова'
             logger.error(error_message)
             messagebox.showerror('Ошибка', error_message)
 

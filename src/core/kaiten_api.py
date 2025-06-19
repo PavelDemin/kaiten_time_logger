@@ -6,33 +6,31 @@ from src.utils.logger import logger
 
 
 class KaitenAPI:
-    def __init__(self, token: str):
+    def __init__(self, token: str, kaiten_url: str):
         self.token = token
-        self.base_url = 'https://kaiten.ru/api/latest'
+        self.base_url = f'{kaiten_url}/api/latest'
         self.headers = {
             'Authorization': f'Bearer {token}',
             'Content-Type': 'application/json',
         }
 
-    def add_time_log(self, card_id: str, time_spent: str, description: str) -> bool:
+    def add_time_log(self, card_id: int, time_spent: int, description: str) -> bool:
         try:
-            hours, minutes = map(int, time_spent.split('.'))
-            total_minutes = hours * 60 + minutes
-
             data = {
-                'cardId': card_id,
-                'minutes': total_minutes,
-                'description': description,
-                'date': datetime.now().strftime('%Y-%m-%d'),
+                'card_id': card_id,
+                'time_spent': time_spent,
+                'comment': description,
+                'for_date': datetime.now().strftime('%Y-%m-%d'),
+                'role_id': 6161,
             }
 
             response = requests.post(
-                f'{self.base_url}/cards/time-logs',
+                f'{self.base_url}/cards/{card_id}/time-logs',
                 headers=self.headers,
                 json=data,
             )
 
-            return response.status_code == 201
+            return response.status_code == 200
 
         except (ValueError, requests.RequestException) as e:
             logger.error(f'Error adding time log: {e}')
