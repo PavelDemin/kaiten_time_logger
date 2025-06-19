@@ -8,7 +8,7 @@ class SettingsWindow(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
         self.title('Настройки')
-        self.geometry('400x380')
+        self.geometry('400x450')
 
         style = ttk.Style()
         style.configure('Settings.TLabel', padding=5)
@@ -60,6 +60,17 @@ class SettingsWindow(tk.Toplevel):
         )
         time_entry.pack(padx=5, pady=5)
 
+        role_id_label = ttk.Label(self, text='Идентификатор Роли в Kaiten:', style='Settings.TLabel')
+        role_id_label.pack(padx=5, pady=5)
+        self.role_id = tk.IntVar(value=config.role_id)
+        role_id_entry = ttk.Entry(
+            self,
+            textvariable=self.role_id,
+            width=10,
+            style='Settings.TEntry',
+        )
+        role_id_entry.pack(padx=5, pady=5)
+
         save_button = ttk.Button(
             self,
             text='Сохранить',
@@ -74,5 +85,6 @@ class SettingsWindow(tk.Toplevel):
             self.time_var.get(),
             self.repo_var.get(),
             self.url_var.get(),
+            self.role_id.get()
         )
         self.destroy()

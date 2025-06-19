@@ -6,9 +6,10 @@ from src.utils.logger import logger
 
 
 class KaitenAPI:
-    def __init__(self, token: str, kaiten_url: str):
+    def __init__(self, token: str, kaiten_url: str, role_id: int):
         self.token = token
         self.base_url = f'{kaiten_url}/api/latest'
+        self.role_id = role_id
         self.headers = {
             'Authorization': f'Bearer {token}',
             'Content-Type': 'application/json',
@@ -21,7 +22,7 @@ class KaitenAPI:
                 'time_spent': time_spent,
                 'comment': description,
                 'for_date': datetime.now().strftime('%Y-%m-%d'),
-                'role_id': 6161,
+                'role_id': self.role_id,
             }
 
             response = requests.post(
@@ -32,16 +33,6 @@ class KaitenAPI:
 
             return response.status_code == 200
 
-        except (ValueError, requests.RequestException) as e:
-            logger.error(f'Error adding time log: {e}')
-            return False
-
-    def validate_token(self) -> bool:
-        try:
-            response = requests.get(
-                f'{self.base_url}/users/current',
-                headers=self.headers,
-            )
-            return response.status_code == 200
-        except requests.RequestException:
+        except requests.RequestException as e:
+            logger.error(f'Ошибка сохранения времени в Kaiten: {e}')
             return False

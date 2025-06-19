@@ -36,7 +36,7 @@ class Application:
         try:
             self.work_calendar = WorkCalendar()
             self.git_manager = GitManager(config.git_repo_path)
-            self.kaiten_api = KaitenAPI(config.kaiten_token, config.kaiten_url)
+            self.kaiten_api = KaitenAPI(config.kaiten_token, config.kaiten_url, config.role_id)
         except Exception as e:
             logger.error(f'Ошибка при инициализации менеджеров: {e}')
             messagebox.showerror('Ошибка', 'Не удалось инициализировать приложение. Проверьте настройки.')
