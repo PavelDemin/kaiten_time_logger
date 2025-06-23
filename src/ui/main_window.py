@@ -32,21 +32,32 @@ class Application:
         self.setup_window()
         self.setup_tray()
         self.setup_scheduler()
+        self.work_calendar = WorkCalendar()
+        self._init_app()
+        self.branch_entries: List[BranchTimeEntry] = []
 
+    def _init_app(self):
         try:
-            self.work_calendar = WorkCalendar()
             self.git_manager = GitManager(config.git_repo_path)
             self.kaiten_api = KaitenAPI(config.kaiten_token, config.kaiten_url, config.role_id)
         except Exception as e:
             logger.error(f'Ошибка при инициализации менеджеров: {e}')
             messagebox.showerror('Ошибка', 'Не удалось инициализировать приложение. Проверьте настройки.')
-
-        self.branch_entries: List[BranchTimeEntry] = []
+            self.show_settings()
 
     def setup_window(self):
         self.root = tk.Tk()
         self.root.title('Kaiten Time Logger')
         self.root.geometry('1000x600')
+
+        screen_width = self.root.winfo_screenwidth()
+        screen_height = self.root.winfo_screenheight()
+        window_width = 1000
+        window_height = 600
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        self.root.geometry(f'{window_width}x{window_height}+{x}+{y}')
+
         self.root.protocol('WM_DELETE_WINDOW', self.hide_window)
 
         style = ttk.Style()
@@ -155,7 +166,7 @@ class Application:
         self.root.withdraw()
 
     def show_settings(self):
-        SettingsWindow(self.root)
+        SettingsWindow(self.root, self._init_app)
 
     def update_branch_entries(self):
         for entry in self.branch_entries:

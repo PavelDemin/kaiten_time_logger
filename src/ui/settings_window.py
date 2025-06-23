@@ -1,14 +1,24 @@
 import tkinter as tk
 from tkinter import ttk
+from typing import Callable
 
 from src.core.config import Config, config
 
 
 class SettingsWindow(tk.Toplevel):
-    def __init__(self, parent):
+    def __init__(self, parent, on_init_app: Callable):
         super().__init__(parent)
+        self.on_init_app = on_init_app
         self.title('Настройки')
         self.geometry('400x450')
+
+        window_width = 400
+        window_height = 450
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x = (screen_width - window_width) // 2
+        y = (screen_height - window_height) // 2
+        self.geometry(f'{window_width}x{window_height}+{x}+{y}')
 
         style = ttk.Style()
         style.configure('Settings.TLabel', padding=5)
@@ -81,10 +91,7 @@ class SettingsWindow(tk.Toplevel):
 
     def save_settings(self):
         Config.save_config(
-            self.token_var.get(),
-            self.time_var.get(),
-            self.repo_var.get(),
-            self.url_var.get(),
-            self.role_id.get()
+            self.token_var.get(), self.time_var.get(), self.repo_var.get(), self.url_var.get(), self.role_id.get()
         )
+        self.on_init_app()
         self.destroy()

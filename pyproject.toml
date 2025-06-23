@@ -5,13 +5,14 @@ description = "Windows application for tracking work time in Kaiten based on git
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "pillow>=10.0.0",
-    "pystray>=0.19.4",
-    "schedule>=1.2.0",
-    "gitpython>=3.1.42",
-    "requests>=2.31.0",
+    "pillow==10.0.0",
+    "pystray==0.19.4",
+    "schedule==1.2.0",
+    "gitpython==3.1.42",
+    "requests==2.31.0",
     "python-dotenv>=1.0.1",
     "holidays==0.74",
+    "keyring==25.6.0",
 ]
 
 [project.optional-dependencies]
@@ -35,3 +36,8 @@ select = [
 
 [tool.ruff.format]
 quote-style = 'single'
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.14.1",
+]
