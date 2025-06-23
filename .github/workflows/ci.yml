@@ -78,7 +78,7 @@ jobs:
 
     - name: Build with PyInstaller
       run: |
-        uv run pyinstaller --name kaiten_time_logger `
+        uv run pyinstaller --name KaitenTimeLogger `
                    --windowed `
                    --onefile `
                    --icon src/static/clock.png `
