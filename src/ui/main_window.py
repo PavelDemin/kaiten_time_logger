@@ -1,6 +1,7 @@
+import os
+import sys
 import threading
 import tkinter as tk
-from pathlib import Path
 from tkinter import messagebox, ttk
 from typing import List
 
@@ -16,7 +17,16 @@ from src.ui.components import BranchTimeEntry, ManualTimeEntry, ScrollableFrame
 from src.ui.settings_window import SettingsWindow
 from src.utils.logger import logger
 
-LOGO_PATH = Path(__file__).parent.parent / 'static\\clock.png'
+
+def get_resource_path(relative_path):
+    if hasattr(sys, '_MEIPASS'):
+        base_path = sys._MEIPASS
+    else:
+        base_path = os.path.abspath('.')
+    return os.path.join(base_path, relative_path)
+
+
+LOGO_PATH = get_resource_path('static\\clock.png')
 
 
 class Application:
@@ -32,12 +42,12 @@ class Application:
         self.setup_window()
         self.setup_tray()
         self.setup_scheduler()
-        self.work_calendar = WorkCalendar()
         self._init_app()
         self.branch_entries: List[BranchTimeEntry] = []
 
     def _init_app(self):
         try:
+            self.work_calendar = WorkCalendar()
             self.git_manager = GitManager(config.git_repo_path)
             self.kaiten_api = KaitenAPI(config.kaiten_token, config.kaiten_url, config.role_id)
         except Exception as e:
@@ -64,10 +74,11 @@ class Application:
         style.configure('Main.TFrame', padding=10)
         style.configure('Main.TButton', padding=5)
         style.configure('Main.TLabel', padding=5)
-
-        if LOGO_PATH.exists():
-            icon_photo = tk.PhotoImage(file=str(LOGO_PATH))
+        try:
+            icon_photo = tk.PhotoImage(file=LOGO_PATH)
             self.root.iconphoto(True, icon_photo)
+        except Exception as e:
+            logger.warning(f'Не удалось установить иконку окна: {e}')
 
         self.loading_frame = ttk.Frame(self.root)
         self.loading_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)

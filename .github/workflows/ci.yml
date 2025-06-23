@@ -82,7 +82,7 @@ jobs:
                    --windowed `
                    --onefile `
                    --icon src/static/clock.png `
-                   --add-data "src/static/clock.png;." `
+                   --add-data "src/static/clock.png;static" `
                    --hidden-import holidays.countries `
                    src/main.py
     
