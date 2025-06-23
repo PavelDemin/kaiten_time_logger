@@ -83,6 +83,7 @@ jobs:
                    --onefile `
                    --icon src/static/clock.png `
                    --add-data "src/static/clock.png;." `
+                   --hidden-import holidays.countries `
                    src/main.py
     
     - name: Upload artifact
