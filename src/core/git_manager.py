@@ -26,7 +26,7 @@ class GitManager:
     @staticmethod
     def _extract_card_id(branch_name: str) -> Optional[int]:
         match = re.search(r'[^-]+-(\d+)', branch_name)
-        return int(match.group(1)) if match else 0
+        return int(match.group(1)) if match else None
 
     def get_branches_with_commits(self) -> List[Tuple[str, int, List[str]]]:
         result = []
