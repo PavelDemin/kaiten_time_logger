@@ -32,6 +32,7 @@ LOGO_PATH = get_resource_path('static\\clock.png')
 class Application:
     def __init__(self):
         self.window_visible = False
+        self.root = None
 
         try:
             self.icon_image = Image.open(LOGO_PATH)
@@ -55,8 +56,21 @@ class Application:
             messagebox.showerror('Ошибка', 'Не удалось инициализировать приложение. Проверьте настройки.')
             self.show_settings()
 
+    def _setup_global_paste_shortcut(self):
+        def paste(event=None):
+            event.widget.event_generate('<<Paste>>')
+            return 'break'
+
+        self.root.bind_class('Entry', '<Control-v>', paste)
+        self.root.bind_class('Entry', '<Control-V>', paste)
+        self.root.bind_class('TEntry', '<Control-v>', paste)
+        self.root.bind_class('TEntry', '<Control-V>', paste)
+        self.root.bind_class('Text', '<Control-v>', paste)
+        self.root.bind_class('Text', '<Control-V>', paste)
+
     def setup_window(self):
         self.root = tk.Tk()
+        self._setup_global_paste_shortcut()
         self.root.title('Kaiten Time Logger')
         self.root.geometry('1000x600')
 
