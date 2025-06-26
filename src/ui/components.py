@@ -1,9 +1,12 @@
+import re
 import tkinter as tk
 import webbrowser
 from tkinter import messagebox, ttk
-from typing import Callable, List, Tuple
+from typing import Callable, List, Optional, Tuple
 
 from src.core.config import config
+
+CARD_ID_REGEX = re.compile(r'card/(\d+)|kaiten\.ru/(\d{6,})\b|^(\d{6,})$')
 
 
 class ScrollableFrame(ttk.Frame):
@@ -165,11 +168,16 @@ class ManualTimeEntry(ttk.Frame):
         input_frame.columnconfigure(1, weight=1)
 
         # ID карточки
-        card_label = ttk.Label(input_frame, text='ID карточки:', font=('Segoe UI', 10))
+        card_label = ttk.Label(input_frame, text='URL карточки или ID:', font=('Segoe UI', 10))
         card_label.grid(row=0, column=0, sticky='w', pady=5)
         self.card_id_var = tk.StringVar()
-        card_entry = ttk.Entry(input_frame, textvariable=self.card_id_var, width=10, font=('Segoe UI', 10))
-        card_entry.grid(row=0, column=1, sticky='w', padx=5, pady=5)
+        self.card_entry = ttk.Entry(input_frame, textvariable=self.card_id_var, width=15, font=('Segoe UI', 10))
+        self.card_entry.grid(row=0, column=1, sticky='w', padx=5, pady=5)
+
+        # Привязка обработчика вставки
+        self.card_entry.bind('<Control-v>', self._on_card_paste)
+        self.card_entry.bind('<Control-V>', self._on_card_paste)
+        self.card_entry.bind('<<Paste>>', self._on_card_paste)
 
         # Описание
         desc_label = ttk.Label(input_frame, text='Описание:', font=('Segoe UI', 10))
@@ -216,3 +224,20 @@ class ManualTimeEntry(ttk.Frame):
         self.card_id_var.set('')
         self.desc_text.delete('1.0', tk.END)
         self.time_var.set('')
+
+    def _on_card_paste(self, event):
+        try:
+            clipboard = event.widget.clipboard_get().strip()
+            card_id = self._fetch_card_id(clipboard)
+            if card_id:
+                self.card_id_var.set(card_id)
+                return 'break'
+        except tk.TclError:
+            pass
+        return None
+
+    @classmethod
+    def _fetch_card_id(cls, value: str) -> Optional[str]:
+        if match := CARD_ID_REGEX.search(value):
+            return next(group for group in match.groups() if group)
+        return None

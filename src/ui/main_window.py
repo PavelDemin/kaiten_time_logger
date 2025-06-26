@@ -57,16 +57,19 @@ class Application:
             self.show_settings()
 
     def _setup_global_paste_shortcut(self):
-        def paste(event=None):
-            event.widget.event_generate('<<Paste>>')
-            return 'break'
+        def _on_paste(event):
+            try:
+                content = event.widget.clipboard_get()
+                if isinstance(event.widget, (tk.Entry, ttk.Entry, tk.Text)):
+                    event.widget.insert(tk.INSERT, content)
+                    return 'break'
+            except tk.TclError:
+                pass
+            return None
 
-        self.root.bind_class('Entry', '<Control-v>', paste)
-        self.root.bind_class('Entry', '<Control-V>', paste)
-        self.root.bind_class('TEntry', '<Control-v>', paste)
-        self.root.bind_class('TEntry', '<Control-V>', paste)
-        self.root.bind_class('Text', '<Control-v>', paste)
-        self.root.bind_class('Text', '<Control-V>', paste)
+        for widget_class in ('Entry', 'TEntry', 'Text'):
+            self.root.bind_class(widget_class, '<Control-v>', _on_paste)
+            self.root.bind_class(widget_class, '<Control-V>', _on_paste)
 
     def setup_window(self):
         self.root = tk.Tk()
