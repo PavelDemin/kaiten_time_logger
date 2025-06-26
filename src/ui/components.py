@@ -175,9 +175,9 @@ class ManualTimeEntry(ttk.Frame):
         self.card_entry.grid(row=0, column=1, sticky='w', padx=5, pady=5)
 
         # Привязка обработчика вставки
-        self.card_entry.bind('<Control-v>', self._on_card_paste)
-        self.card_entry.bind('<Control-V>', self._on_card_paste)
-        self.card_entry.bind('<<Paste>>', self._on_card_paste)
+        self.card_entry.bind('<Control-v>', self._on_card_paste, add='+')
+        self.card_entry.bind('<Control-V>', self._on_card_paste, add='+')
+        self.card_entry.bind('<<Paste>>', self._on_card_paste, add='+')
 
         # Описание
         desc_label = ttk.Label(input_frame, text='Описание:', font=('Segoe UI', 10))
