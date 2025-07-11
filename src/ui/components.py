@@ -133,7 +133,7 @@ class BranchTimeEntry(ttk.Frame):
 
     def get_data(self) -> Tuple[int, int, str]:
         time_spent = self.time_var.get()
-        hours, minutes = map(int, time_spent.split('.'))
+        hours, minutes = map(int, time_spent.split('.') if time_spent else '0.0')
         total_minutes = hours * 60 + minutes
         return self.card_id, total_minutes, self.commits_text.get('1.0', tk.END).strip()
 
@@ -213,7 +213,7 @@ class ManualTimeEntry(ttk.Frame):
         if not card_id.isdigit():
             messagebox.showwarning('Предупреждение', '"ID карточки" должно быть только числовым значением')
         try:
-            hours, minutes = map(int, time_spent.split('.'))
+            hours, minutes = map(int, time_spent.split('.') if time_spent else '0.0')
             if not (0 <= hours <= 24 and 0 <= minutes <= 59):
                 raise ValueError
         except ValueError:
