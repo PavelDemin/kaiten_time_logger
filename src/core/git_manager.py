@@ -11,6 +11,10 @@ from git.objects import Commit
 class GitManager:
     def __init__(self, repo_path: Path):
         self.repo = Repo(repo_path)
+        self.current_user = self._get_current_user()
+
+    def _get_current_user(self) -> str:
+        return self.repo.config_reader().get_value('user', 'name')
 
     def _get_todays_commits(self) -> Dict[str, List[Commit]]:
         current_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
@@ -18,7 +22,7 @@ class GitManager:
         commits_by_branch = defaultdict(list)
 
         for branch in self.repo.heads:
-            for commit in self.repo.iter_commits(branch, since=formatted_date):
+            for commit in self.repo.iter_commits(branch, since=formatted_date, author=self.current_user):
                 commits_by_branch[branch.name].append(commit)
 
         return commits_by_branch
