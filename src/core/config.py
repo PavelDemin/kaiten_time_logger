@@ -16,6 +16,7 @@ class Config:
     git_repo_path: str = str(Path.cwd())
     kaiten_url: str = ''  # https://rtsoft-sg.kaiten.ru
     role_id: int = 0  # 6161
+    working_time: float = 8.0  # Рабочее время в часах
 
     def __post_init__(self):
         SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
@@ -29,6 +30,7 @@ class Config:
                 self.git_repo_path = settings.get('git_repo_path', self.git_repo_path)
                 self.kaiten_url = settings.get('kaiten_url', self.kaiten_url)
                 self.role_id = settings.get('role_id', self.role_id)
+                self.working_time = settings.get('working_time', self.working_time)
             except json.JSONDecodeError:
                 pass
 
@@ -38,17 +40,21 @@ class Config:
             'git_repo_path': self.git_repo_path,
             'kaiten_url': self.kaiten_url,
             'role_id': self.role_id,
+            'working_time': self.working_time,
         }
         SETTINGS_FILE.write_text(json.dumps(settings, indent=2), encoding='utf-8')
 
     @classmethod
-    def save_config(cls, token: str, time: str, repo_path: str, kaiten_url: str, role_id: int) -> None:
+    def save_config(
+        cls, token: str, time: str, repo_path: str, kaiten_url: str, role_id: int, working_time: float
+    ) -> None:
         keyring.set_password(KEYRING_SERVICE, 'kaiten_token', token)
         config.kaiten_token = token
         config.notification_time = time
         config.git_repo_path = repo_path
         config.kaiten_url = kaiten_url
         config.role_id = role_id
+        config.working_time = working_time
         config._save_settings_file()
 
 

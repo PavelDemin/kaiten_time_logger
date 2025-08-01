@@ -13,7 +13,7 @@ class SettingsWindow(tk.Toplevel):
         self.geometry('400x450')
 
         window_width = 400
-        window_height = 450
+        window_height = 530
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         x = (screen_width - window_width) // 2
@@ -81,6 +81,17 @@ class SettingsWindow(tk.Toplevel):
         )
         role_id_entry.pack(padx=5, pady=5)
 
+        working_time_label = ttk.Label(self, text='Рабочее время (часы):', style='Settings.TLabel')
+        working_time_label.pack(padx=5, pady=5)
+        self.working_time_var = tk.DoubleVar(value=config.working_time)
+        working_hours_entry = ttk.Entry(
+            self,
+            textvariable=self.working_time_var,
+            width=10,
+            style='Settings.TEntry',
+        )
+        working_hours_entry.pack(padx=5, pady=5)
+
         save_button = ttk.Button(
             self,
             text='Сохранить',
@@ -91,7 +102,12 @@ class SettingsWindow(tk.Toplevel):
 
     def save_settings(self):
         Config.save_config(
-            self.token_var.get(), self.time_var.get(), self.repo_var.get(), self.url_var.get(), self.role_id.get()
+            self.token_var.get(),
+            self.time_var.get(),
+            self.repo_var.get(),
+            self.url_var.get(),
+            self.role_id.get(),
+            self.working_time_var.get(),
         )
         self.on_init_app()
         self.destroy()

@@ -54,8 +54,16 @@ class ScrollableFrame(ttk.Frame):
 class BranchTimeEntry(ttk.Frame):
     """Виджет для ввода времени, потраченного на работу в ветке."""
 
-    def __init__(self, parent: ScrollableFrame, branch_name: str, card_id: int, commits: List[str]):
+    def __init__(
+        self,
+        parent: ScrollableFrame,
+        branch_name: str,
+        card_id: int,
+        commits: List[str],
+        on_time_change: Callable = None,
+    ):
         self.card_id = card_id
+        self.on_time_change = on_time_change
         super().__init__()
 
         self.frame = tk.Frame(
@@ -128,8 +136,13 @@ class BranchTimeEntry(ttk.Frame):
         time_label.pack(side=tk.LEFT)
 
         self.time_var = tk.StringVar()
+        self.time_var.trace('w', self._on_time_change)
         time_entry = ttk.Entry(time_frame, textvariable=self.time_var, width=10, font=('Segoe UI', 10))
         time_entry.pack(side=tk.LEFT, padx=5)
+
+    def _on_time_change(self, *args):
+        if self.on_time_change:
+            self.on_time_change()
 
     def get_data(self) -> Tuple[int, int, str]:
         time_spent = self.time_var.get()
@@ -137,13 +150,24 @@ class BranchTimeEntry(ttk.Frame):
         total_minutes = hours * 60 + minutes
         return self.card_id, total_minutes, self.commits_text.get('1.0', tk.END).strip()
 
+    def get_time_minutes(self) -> int:
+        time_spent = self.time_var.get()
+        if not time_spent:
+            return 0
+        try:
+            hours, minutes = map(int, time_spent.split('.'))
+            return hours * 60 + minutes
+        except (ValueError, AttributeError):
+            return 0
+
 
 class ManualTimeEntry(ttk.Frame):
     """Виджет для ручного добавления записи времени."""
 
-    def __init__(self, parent: ScrollableFrame, on_add_entry: Callable):
+    def __init__(self, parent: ScrollableFrame, on_add_entry: Callable, on_time_change: Callable = None):
         super().__init__()
         self.on_add_entry = on_add_entry
+        self.on_time_change = on_time_change
 
         self.frame = tk.Frame(
             parent.scrollable_frame,
@@ -189,6 +213,7 @@ class ManualTimeEntry(ttk.Frame):
         time_label = ttk.Label(input_frame, text='Время:', font=('Segoe UI', 10))
         time_label.grid(row=2, column=0, sticky='w', pady=5)
         self.time_var = tk.StringVar()
+        self.time_var.trace('w', self._on_time_change)
         time_entry = ttk.Entry(input_frame, textvariable=self.time_var, width=10, font=('Segoe UI', 10))
         time_entry.grid(row=2, column=1, sticky='w', padx=5, pady=5)
 
@@ -200,6 +225,20 @@ class ManualTimeEntry(ttk.Frame):
             style='Main.TButton',
         )
         add_button.grid(row=3, column=1, sticky='e', pady=10)
+
+    def _on_time_change(self, *args):
+        if self.on_time_change:
+            self.on_time_change()
+
+    def get_time_minutes(self) -> int:
+        time_spent = self.time_var.get()
+        if not time_spent:
+            return 0
+        try:
+            hours, minutes = map(int, time_spent.split('.'))
+            return hours * 60 + minutes
+        except (ValueError, AttributeError):
+            return 0
 
     def add_entry(self):
         """Обработчик нажатия кнопки добавления."""

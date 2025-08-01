@@ -110,7 +110,9 @@ class Application:
         self.loading_label.pack(pady=10)
 
         self.main_frame = ScrollableFrame(self.root)
-        self.manual_entry = ManualTimeEntry(self.main_frame, on_add_entry=self._add_manual_branch_entry)
+        self.manual_entry = ManualTimeEntry(
+            self.main_frame, on_add_entry=self._add_manual_branch_entry, on_time_change=self._update_total_time
+        )
 
         self.buttons_frame = ttk.Frame(self.root, style='Main.TFrame')
 
@@ -121,6 +123,12 @@ class Application:
             style='Main.TButton',
         )
         settings_button.pack(side=tk.LEFT, padx=5)
+
+        # Добавляем отображение общего времени
+        self.total_time_label = ttk.Label(
+            self.buttons_frame, text='Общее время: 0ч 0м', font=('Segoe UI', 10, 'bold'), foreground='black'
+        )
+        self.total_time_label.pack(side=tk.LEFT, padx=10)
 
         save_button = ttk.Button(
             self.buttons_frame,
@@ -161,9 +169,28 @@ class Application:
             branch_name=str(card_id),
             card_id=card_id,
             commits=[description] if description else [],
+            on_time_change=self._update_total_time,
         )
         entry.time_var.set(time_spent)
         self.branch_entries.append(entry)
+        self._update_total_time()
+
+    def _update_total_time(self):
+        total_minutes = 0
+        for entry in self.branch_entries:
+            total_minutes += entry.get_time_minutes()
+        total_minutes += self.manual_entry.get_time_minutes()
+        hours = total_minutes // 60
+        minutes = total_minutes % 60
+        time_text = f'Общее время: {hours}ч {minutes}м'
+        working_minutes = int(config.working_time * 60)
+        if total_minutes == working_minutes:
+            color = 'green'
+        elif total_minutes < working_minutes or total_minutes > working_minutes:
+            color = 'red'
+        else:
+            color = 'black'
+        self.total_time_label.configure(text=time_text, foreground=color)
 
     def check_notification_time(self):
         if not self.window_visible and self.work_calendar.should_show_notification(config.notification_time):
@@ -205,13 +232,11 @@ class Application:
             branches_data = self.git_manager.get_branches_with_commits()
             for branch_name, card_id, commits in branches_data:
                 entry = BranchTimeEntry(
-                    self.main_frame,
-                    branch_name,
-                    card_id,
-                    commits,
+                    self.main_frame, branch_name, card_id, commits, on_time_change=self._update_total_time
                 )
                 self.branch_entries.append(entry)
             logger.info(f'Найдено {len(self.branch_entries)} веток с коммитами')
+            self._update_total_time()
         except Exception as e:
             logger.error(f'Ошибка при обновлении списка веток: {e}')
             messagebox.showerror('Ошибка', 'Не удалось получить список коммитов. Проверьте путь к репозиторию.')
