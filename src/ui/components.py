@@ -145,21 +145,23 @@ class BranchTimeEntry(ttk.Frame):
             self.on_time_change()
 
     def get_data(self) -> Tuple[int, int, str]:
-        time_spent = self.time_var.get()
-        hours, minutes = map(int, time_spent.split('.') if time_spent else (0, 0))
+        hours, minutes = self._prepare_time(self.time_var.get())
         total_minutes = hours * 60 + minutes
         return self.card_id, total_minutes, self.commits_text.get('1.0', tk.END).strip()
 
     def get_time_minutes(self) -> int:
-        time_spent = self.time_var.get()
-        if not time_spent:
-            return 0
-        try:
-            hours, minutes = map(int, time_spent.split('.'))
-            return hours * 60 + minutes
-        except (ValueError, AttributeError):
-            return 0
+        hours, minutes = self._prepare_time(self.time_var.get())
+        return hours * 60 + minutes
 
+    @staticmethod
+    def _prepare_time(time_spent: str) -> tuple[int, int]:
+        try:
+            if time_spent.isdigit():
+                return int(time_spent), 0
+            hours, minutes = map(int, time_spent.split('.') if time_spent else (0, 0))
+            return hours, minutes
+        except (ValueError, AttributeError):
+            return 0, 0
 
 class ManualTimeEntry(ttk.Frame):
     """Виджет для ручного добавления записи времени."""
