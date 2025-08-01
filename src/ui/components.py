@@ -163,6 +163,7 @@ class BranchTimeEntry(ttk.Frame):
         except (ValueError, AttributeError):
             return 0, 0
 
+
 class ManualTimeEntry(ttk.Frame):
     """Виджет для ручного добавления записи времени."""
 
