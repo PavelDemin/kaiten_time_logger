@@ -6,7 +6,7 @@ from src.core.config import Config, config
 
 
 class SettingsWindow(tk.Toplevel):
-    def __init__(self, parent, on_init_app: Callable, user_roles: list[dict[int, str]]):
+    def __init__(self, parent, on_init_app: Callable, user_roles: dict[int, str]):
         super().__init__(parent)
         self.on_init_app = on_init_app
         self.user_roles = user_roles
@@ -66,11 +66,11 @@ class SettingsWindow(tk.Toplevel):
         role_combobox = ttk.Combobox(
             self,
             textvariable=self.role_var,
-            values=sorted(role for role in user_roles.values()),
+            values=sorted(role for role in self.user_roles.values()),
             width=39,  # не 40 из-за кнопки раскрытия списка
         )
         role_combobox.pack(padx=5, pady=5)
-        self.role_var.set(user_roles[config.role_id])
+        self.role_var.set(self.user_roles[config.role_id])
 
         working_time_label = ttk.Label(self, text='Рабочее время (часы):', style='Settings.TLabel')
         working_time_label.pack(padx=5, pady=5)
@@ -78,7 +78,7 @@ class SettingsWindow(tk.Toplevel):
         working_hours_entry = ttk.Entry(
             self,
             textvariable=self.working_time_var,
-            width=10,
+            width=5,
             style='Settings.TEntry',
         )
         working_hours_entry.pack(padx=5, pady=5)
@@ -89,7 +89,7 @@ class SettingsWindow(tk.Toplevel):
         time_entry = ttk.Entry(
             self,
             textvariable=self.time_var,
-            width=4,
+            width=5,
             style='Settings.TEntry',
         )
         time_entry.pack(padx=5, pady=5)

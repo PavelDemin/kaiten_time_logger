@@ -37,7 +37,7 @@ class KaitenAPI:
             logger.error(f'Ошибка сохранения времени в Kaiten: {e}')
             return False
 
-    def get_list_of_user_roles(self) -> list[tuple[id, str]]:
+    def get_list_of_user_roles(self) -> dict[id, str]:
         response = requests.get(
             f'{self.base_url}/user-roles',
             headers=self.headers,
