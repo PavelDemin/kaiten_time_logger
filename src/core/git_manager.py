@@ -17,11 +17,15 @@ class GitManager:
         return self.repo.config_reader().get_value('user', 'name')
 
     def _get_todays_commits(self) -> Dict[str, List[Commit]]:
-        current_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+        tz = datetime.now().astimezone().tzinfo
+        current_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=tz)
         formatted_date = current_date.strftime('%Y-%m-%d %H:%M:%S.%f')
         commits_by_branch = defaultdict(list)
 
         for branch in self.repo.heads:
+            latest_commit = branch.commit
+            if latest_commit.committed_datetime < current_date:
+                continue
             for commit in self.repo.iter_commits(branch, since=formatted_date, author=self.current_user):
                 commits_by_branch[branch.name].append(commit)
 
