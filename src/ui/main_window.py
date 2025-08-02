@@ -75,12 +75,14 @@ class Application:
         self.root = tk.Tk()
         self._setup_global_paste_shortcut()
         self.root.title('Kaiten Time Logger')
-        self.root.geometry('1000x600')
+
+        window_width = 1000
+        window_height = 800
+
+        self.root.geometry(f'{window_width}x{window_height}')
 
         screen_width = self.root.winfo_screenwidth()
         screen_height = self.root.winfo_screenheight()
-        window_width = 1000
-        window_height = 600
         x = (screen_width - window_width) // 2
         y = (screen_height - window_height) // 2
         self.root.geometry(f'{window_width}x{window_height}+{x}+{y}')
@@ -140,7 +142,8 @@ class Application:
 
     def setup_tray(self):
         menu = (
-            pystray.MenuItem('Показать', self.show_window),
+            pystray.MenuItem('Учет времени', self.show_window),
+            pystray.MenuItem('Настройки', self.show_settings),
             pystray.MenuItem('Выход', self.quit_application),
         )
         self.tray_icon = pystray.Icon(
@@ -221,7 +224,7 @@ class Application:
         self.root.withdraw()
 
     def show_settings(self):
-        SettingsWindow(self.root, self._init_app)
+        SettingsWindow(self.root, self._init_app, self.kaiten_api.get_list_of_user_roles())
 
     def update_branch_entries(self):
         for entry in self.branch_entries:
