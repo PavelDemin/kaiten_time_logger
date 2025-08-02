@@ -3,7 +3,7 @@ name = "kaiten-work-time-alert"
 version = "0.1.0"
 description = "Windows application for tracking work time in Kaiten based on git commits"
 readme = "README.md"
-requires-python = ">=3.12"
+requires-python = "==3.12"
 dependencies = [
     "pillow==10.0.0",
     "pystray==0.19.4",
