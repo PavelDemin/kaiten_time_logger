@@ -234,6 +234,7 @@ class Application:
         try:
             branches_data = self.git_manager.get_branches_with_commits()
             for branch_name, card_id, commits in branches_data:
+                logger.info(f'{branch_name=} {card_id=}')
                 entry = BranchTimeEntry(
                     self.main_frame, branch_name, card_id, commits, on_time_change=self._update_total_time
                 )
@@ -241,7 +242,7 @@ class Application:
             logger.info(f'Найдено {len(self.branch_entries)} веток с коммитами')
             self._update_total_time()
         except Exception as e:
-            logger.error(f'Ошибка при обновлении списка веток: {e}')
+            logger.exception(f'Ошибка при обновлении списка веток: {e}')
             messagebox.showerror('Ошибка', 'Не удалось получить список коммитов. Проверьте путь к репозиторию.')
 
     def save_time_logs(self):

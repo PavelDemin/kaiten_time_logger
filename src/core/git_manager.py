@@ -21,9 +21,8 @@ class GitManager:
         formatted_date = current_date.strftime('%Y-%m-%d %H:%M:%S.%f')
         commits_by_branch = defaultdict(list)
 
-        for branch in self.repo.heads:
-            for commit in self.repo.iter_commits(branch, since=formatted_date, author=self.current_user):
-                commits_by_branch[branch.name].append(commit)
+        for commit in self.repo.iter_commits(since=formatted_date, author=self.current_user):
+            commits_by_branch[commit.message.split()[0]].append(commit)
 
         return commits_by_branch
 
