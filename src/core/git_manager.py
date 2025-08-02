@@ -34,7 +34,8 @@ class GitManager:
     def get_branches_with_commits(self) -> List[Tuple[str, int, List[str]]]:
         result = []
         commits_by_branch = self._get_todays_commits()
-        if commits and (card_id := self._extract_card_id(branch_name)):
-            commit_messages = [commit.message.strip() for commit in commits]
-            result.append((branch_name, card_id, commit_messages))
+        for branch_name, commits in commits_by_branch.items():
+            if commits and (card_id := self._extract_card_id(branch_name)):
+                commit_messages = [commit.message.strip() for commit in commits]
+                result.append((branch_name, card_id, commit_messages))
         return result
