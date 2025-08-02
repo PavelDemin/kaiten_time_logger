@@ -39,6 +39,7 @@ quote-style = 'single'
 
 [dependency-groups]
 dev = [
+    "pre-commit>=4.2.0",
     "pyinstaller>=6.14.1",
     "pytest>=8.4.0",
 ]
