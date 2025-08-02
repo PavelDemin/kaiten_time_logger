@@ -21,9 +21,8 @@ class GitManager:
         formatted_date = current_date.strftime('%Y-%m-%d %H:%M:%S.%f')
         commits_by_branch = defaultdict(list)
 
-        for branch in self.repo.heads:
-            for commit in self.repo.iter_commits(branch, since=formatted_date, author=self.current_user):
-                commits_by_branch[branch.name].append(commit)
+        for commit in self.repo.iter_commits(since=formatted_date, author=self.current_user):
+            commits_by_branch[commit.message.split()[0]].append(commit)
 
         return commits_by_branch
 
@@ -35,8 +34,7 @@ class GitManager:
     def get_branches_with_commits(self) -> List[Tuple[str, int, List[str]]]:
         result = []
         commits_by_branch = self._get_todays_commits()
-        for branch_name, commits in commits_by_branch.items():
-            if commits and (card_id := self._extract_card_id(branch_name)):
-                commit_messages = [commit.message.strip() for commit in commits]
-                result.append((branch_name, card_id, commit_messages))
+        if commits and (card_id := self._extract_card_id(branch_name)):
+            commit_messages = [commit.message.strip() for commit in commits]
+            result.append((branch_name, card_id, commit_messages))
         return result
