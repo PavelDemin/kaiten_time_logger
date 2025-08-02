@@ -36,3 +36,11 @@ class KaitenAPI:
         except requests.RequestException as e:
             logger.error(f'Ошибка сохранения времени в Kaiten: {e}')
             return False
+
+    def get_list_of_user_roles(self) -> list[tuple[id, str]]:
+        response = requests.get(
+            f'{self.base_url}/user-roles',
+            headers=self.headers,
+        )
+        user_roles = response.json()
+        return {role['id']: role['name'] for role in user_roles}

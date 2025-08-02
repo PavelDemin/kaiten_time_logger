@@ -6,9 +6,10 @@ from src.core.config import Config, config
 
 
 class SettingsWindow(tk.Toplevel):
-    def __init__(self, parent, on_init_app: Callable):
+    def __init__(self, parent, on_init_app: Callable, user_roles: list[dict[int, str]]):
         super().__init__(parent)
         self.on_init_app = on_init_app
+        self.user_roles = user_roles
         self.title('Настройки')
         self.geometry('400x450')
 
@@ -59,27 +60,17 @@ class SettingsWindow(tk.Toplevel):
         )
         repo_entry.pack(padx=5, pady=5)
 
-        time_label = ttk.Label(self, text='Время уведомления (HH:MM):', style='Settings.TLabel')
-        time_label.pack(padx=5, pady=5)
-        self.time_var = tk.StringVar(value=config.notification_time)
-        time_entry = ttk.Entry(
+        role_label = ttk.Label(self, text='Роль пользователя:', style='Settings.TLabel')
+        role_label.pack(padx=5, pady=5)
+        self.role_var = tk.StringVar()
+        role_combobox = ttk.Combobox(
             self,
-            textvariable=self.time_var,
-            width=10,
-            style='Settings.TEntry',
+            textvariable=self.role_var,
+            values=sorted(role for role in user_roles.values()),
+            width=39,  # не 40 из-за кнопки раскрытия списка
         )
-        time_entry.pack(padx=5, pady=5)
-
-        role_id_label = ttk.Label(self, text='Идентификатор Роли в Kaiten:', style='Settings.TLabel')
-        role_id_label.pack(padx=5, pady=5)
-        self.role_id = tk.IntVar(value=config.role_id)
-        role_id_entry = ttk.Entry(
-            self,
-            textvariable=self.role_id,
-            width=10,
-            style='Settings.TEntry',
-        )
-        role_id_entry.pack(padx=5, pady=5)
+        role_combobox.pack(padx=5, pady=5)
+        self.role_var.set(user_roles[config.role_id])
 
         working_time_label = ttk.Label(self, text='Рабочее время (часы):', style='Settings.TLabel')
         working_time_label.pack(padx=5, pady=5)
@@ -92,13 +83,24 @@ class SettingsWindow(tk.Toplevel):
         )
         working_hours_entry.pack(padx=5, pady=5)
 
+        time_label = ttk.Label(self, text='Время уведомления (HH:MM):', style='Settings.TLabel')
+        time_label.pack(padx=5, pady=5)
+        self.time_var = tk.StringVar(value=config.notification_time)
+        time_entry = ttk.Entry(
+            self,
+            textvariable=self.time_var,
+            width=4,
+            style='Settings.TEntry',
+        )
+        time_entry.pack(padx=5, pady=5)
+
         save_button = ttk.Button(
             self,
             text='Сохранить',
             command=self.save_settings,
             style='Settings.TButton',
         )
-        save_button.pack(padx=5, pady=10)
+        save_button.pack(padx=5, pady=20)
 
     def save_settings(self):
         Config.save_config(
@@ -106,7 +108,7 @@ class SettingsWindow(tk.Toplevel):
             self.time_var.get(),
             self.repo_var.get(),
             self.url_var.get(),
-            self.role_id.get(),
+            next(role_id for role_id, role_name in self.user_roles.items() if role_name == self.role_var.get()),
             self.working_time_var.get(),
         )
         self.on_init_app()
