@@ -215,12 +215,16 @@ class BranchTimeEntry(ttk.Frame):
             else:
                 raise ValueError("Invalid time format. Expected 'hh h mmm'.")
 
+        # Check if the input is in the format '1h'
+        elif time_str.endswith('h') and time_str[:-1].isdigit():
+            hours = int(time_str[:-1])
+
         # Check if the input is in the format '10m'
         elif time_str.endswith('m') and time_str[:-1].isdigit():
             minutes = int(time_str[:-1])
 
         else:
-            raise ValueError("Invalid time format. Expected 'hh:mm', 'hhhm', 'hh h mmm', or 'mm'.")
+            raise ValueError("Invalid time format. Expected 'hh:mm', 'hhhm', 'hh h mmm', 'hhh', or 'mm'.")
 
         return hours, minutes
 
