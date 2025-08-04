@@ -129,6 +129,14 @@ class BranchTimeEntry(ttk.Frame):
         for message in commits:
             self.commits_text.insert(tk.END, f'{message}\n')
 
+        # Create a vertical scrollbar
+        scrollbar = tk.Scrollbar(commits_frame, orient='vertical', command=self.commits_text.yview)
+
+        # Configure the Text widget to use the scrollbar
+        self.commits_text.config(yscrollcommand=scrollbar.set)
+
+        scrollbar.grid(row=0, column=1, sticky='ns')
+
         time_frame = ttk.Frame(self.frame)
         time_frame.grid(row=2, column=0, sticky='w', padx=15, pady=(0, 10))
 
@@ -158,7 +166,7 @@ class BranchTimeEntry(ttk.Frame):
         try:
             if time_spent.isdigit():
                 return int(time_spent), 0
-            hours, minutes = map(int, time_spent.split('.') if time_spent else (0, 0))
+            hours, minutes = map(int, time_spent.split(':') if time_spent else (0, 0))
             return hours, minutes
         except (ValueError, AttributeError):
             return 0, 0
@@ -238,7 +246,7 @@ class ManualTimeEntry(ttk.Frame):
         if not time_spent:
             return 0
         try:
-            hours, minutes = map(int, time_spent.split('.'))
+            hours, minutes = map(int, time_spent.split(':'))
             return hours * 60 + minutes
         except (ValueError, AttributeError):
             return 0
@@ -255,7 +263,7 @@ class ManualTimeEntry(ttk.Frame):
         if not card_id.isdigit():
             messagebox.showwarning('Предупреждение', '"ID карточки" должно быть только числовым значением')
         try:
-            hours, minutes = map(int, time_spent.split('.') if time_spent else '0.0')
+            hours, minutes = map(int, time_spent.split(':') if time_spent else '0.0')
             if not (0 <= hours <= 24 and 0 <= minutes <= 59):
                 raise ValueError
         except ValueError:
