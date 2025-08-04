@@ -166,10 +166,63 @@ class BranchTimeEntry(ttk.Frame):
         try:
             if time_spent.isdigit():
                 return int(time_spent), 0
-            hours, minutes = map(int, time_spent.split(':') if time_spent else (0, 0))
+            hours, minutes = BranchTimeEntry.parse_time(time_spent)
             return hours, minutes
         except (ValueError, AttributeError):
             return 0, 0
+
+    @staticmethod
+    def parse_time(time_str) -> Tuple[int, int]:
+        # Check if the input string is empty
+        if not time_str.strip():
+            return 0, 0
+
+        # Initialize hours and minutes
+        hours = 0
+        minutes = 0
+
+        # Remove any leading/trailing whitespace
+        time_str = time_str.strip()
+
+        # Check if the input is in the format '1:20'
+        if ':' in time_str:
+            parts = time_str.split(':')
+            if len(parts) == 2 and parts[0].isdigit() and parts[1].isdigit():
+                hours = int(parts[0])
+                minutes = int(parts[1])
+            else:
+                raise ValueError("Invalid time format. Expected 'hh:mm'.")
+
+        # Check if the input is in the format '1h30m'
+        elif 'h' in time_str and 'm' in time_str and ' ' not in time_str:
+            parts = time_str.split('h')
+            if len(parts) == 2:
+                hours_part, minutes_part = parts
+                if hours_part.isdigit() and minutes_part.endswith('m') and minutes_part[:-1].isdigit():
+                    hours = int(hours_part)
+                    minutes = int(minutes_part[:-1])
+                else:
+                    raise ValueError("Invalid time format. Expected 'hhhm'.")
+            else:
+                raise ValueError("Invalid time format. Expected 'hhhm'.")
+
+        # Check if the input is in the format '1h 10m'
+        elif 'h' in time_str and 'm' in time_str and ' ' in time_str:
+            parts = time_str.split()
+            if len(parts) == 2 and parts[0].endswith('h') and parts[1].endswith('m'):
+                hours = int(parts[0][:-1])
+                minutes = int(parts[1][:-1])
+            else:
+                raise ValueError("Invalid time format. Expected 'hh h mmm'.")
+
+        # Check if the input is in the format '10m'
+        elif time_str.endswith('m') and time_str[:-1].isdigit():
+            minutes = int(time_str[:-1])
+
+        else:
+            raise ValueError("Invalid time format. Expected 'hh:mm', 'hhhm', 'hh h mmm', or 'mm'.")
+
+        return hours, minutes
 
 
 class ManualTimeEntry(ttk.Frame):
@@ -246,7 +299,7 @@ class ManualTimeEntry(ttk.Frame):
         if not time_spent:
             return 0
         try:
-            hours, minutes = map(int, time_spent.split(':'))
+            hours, minutes = BranchTimeEntry.parse_time(time_spent)
             return hours * 60 + minutes
         except (ValueError, AttributeError):
             return 0
@@ -263,7 +316,7 @@ class ManualTimeEntry(ttk.Frame):
         if not card_id.isdigit():
             messagebox.showwarning('Предупреждение', '"ID карточки" должно быть только числовым значением')
         try:
-            hours, minutes = map(int, time_spent.split(':') if time_spent else '0.0')
+            hours, minutes = BranchTimeEntry.parse_time(time_spent)
             if not (0 <= hours <= 24 and 0 <= minutes <= 59):
                 raise ValueError
         except ValueError:
