@@ -42,5 +42,8 @@ class KaitenAPI:
             f'{self.base_url}/user-roles',
             headers=self.headers,
         )
-        user_roles = response.json()
-        return {role['id']: role['name'] for role in user_roles}
+        if response.status_code == 200:
+            user_roles = response.json()
+            return {role['id']: role['name'] for role in user_roles}
+        else:
+            return {5603: '01. Back C#'}
