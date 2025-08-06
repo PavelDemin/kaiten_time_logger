@@ -129,6 +129,10 @@ class BranchTimeEntry(ttk.Frame):
         for message in commits:
             self.commits_text.insert(tk.END, f'{message}\n')
 
+        scrollbar = tk.Scrollbar(commits_frame, orient='vertical', command=self.commits_text.yview)
+        self.commits_text.config(yscrollcommand=scrollbar.set)
+        scrollbar.grid(row=0, column=1, sticky='ns')
+
         time_frame = ttk.Frame(self.frame)
         time_frame.grid(row=2, column=0, sticky='w', padx=15, pady=(0, 10))
 
@@ -158,10 +162,90 @@ class BranchTimeEntry(ttk.Frame):
         try:
             if time_spent.isdigit():
                 return int(time_spent), 0
-            hours, minutes = map(int, time_spent.split('.') if time_spent else (0, 0))
+            hours, minutes = BranchTimeEntry.parse_time(time_spent)
             return hours, minutes
         except (ValueError, AttributeError):
             return 0, 0
+
+    @staticmethod
+    def parse_time(time_str: str) -> Tuple[int, int]:
+        """Парсит строку времени в часы и минуты.
+
+        Поддерживаемые форматы:
+        - 13:30 (часы:минуты)
+        - 1h30m, 1ч30м (часы и минуты без пробелов)
+        - 1h 30m, 1ч 30м (часы и минуты с пробелами)
+        - 1h, 1ч (только часы)
+        - 30m, 30м (только минуты)
+        - 1.5h, 1.5ч (десятичные часы)
+        - 90m, 90м (минуты больше 60)
+        - 5 (целое число как часы)
+        """
+        import re
+
+        if not time_str or not time_str.strip():
+            return 0, 0
+
+        time_str = time_str.strip()
+        hours = 0
+        minutes = 0
+
+        patterns = [
+            # 13:30, 1:0, 0:5
+            r'^(\d{1,2}):(\d{1,2})$',
+            # 1h30m, 1ч30м
+            r'^(\d+(?:\.\d+)?)[hч](\d+)[mм]$',
+            # 1h 30m, 1ч 30м
+            r'^(\d+(?:\.\d+)?)[hч]\s+(\d+)[mм]$',
+            # 1h, 1ч
+            r'^(\d+(?:\.\d+)?)[hч]$',
+            # 30m, 30м
+            r'^(\d+)[mм]$',
+            # 5 (целое число как часы)
+            r'^(\d+)$',
+        ]
+
+        for pattern in patterns:
+            match = re.match(pattern, time_str)
+            if match:
+                groups = match.groups()
+
+                if len(groups) == 2:
+                    if ':' in time_str:
+                        hours = int(groups[0])
+                        minutes = int(groups[1])
+                    else:
+                        hours = float(groups[0])
+                        minutes = int(groups[1])
+
+                        if hours != int(hours):
+                            total_minutes = int(hours * 60)
+                            hours = total_minutes // 60
+                            minutes += total_minutes % 60
+                        else:
+                            hours = int(hours)
+
+                elif len(groups) == 1:
+                    value = float(groups[0])
+
+                    if time_str.endswith(('h', 'ч')):
+                        if value != int(value):
+                            total_minutes = int(value * 60)
+                            hours = total_minutes // 60
+                            minutes = total_minutes % 60
+                        else:
+                            hours = int(value)
+                    elif time_str.endswith(('m', 'м')):
+                        minutes = int(value)
+                        if minutes >= 60:
+                            hours = minutes // 60
+                            minutes = minutes % 60
+                    else:
+                        hours = int(value)
+
+                return hours, minutes
+
+        raise ValueError(f'Неизвестный формат времени: {time_str}')
 
 
 class ManualTimeEntry(ttk.Frame):
@@ -238,7 +322,7 @@ class ManualTimeEntry(ttk.Frame):
         if not time_spent:
             return 0
         try:
-            hours, minutes = map(int, time_spent.split('.'))
+            hours, minutes = BranchTimeEntry.parse_time(time_spent)
             return hours * 60 + minutes
         except (ValueError, AttributeError):
             return 0
@@ -255,11 +339,17 @@ class ManualTimeEntry(ttk.Frame):
         if not card_id.isdigit():
             messagebox.showwarning('Предупреждение', '"ID карточки" должно быть только числовым значением')
         try:
-            hours, minutes = map(int, time_spent.split('.') if time_spent else '0.0')
+            hours, minutes = BranchTimeEntry.parse_time(time_spent)
             if not (0 <= hours <= 24 and 0 <= minutes <= 59):
                 raise ValueError
         except ValueError:
-            messagebox.showwarning('Предупреждение', 'Время должно быть в формате ЧЧ.ММ')
+            messagebox.showwarning(
+                title='Предупреждение',
+                message=(
+                    'Не верный формат времени. '
+                    'Поддерживаемые форматы 13:30, 1h30m, 1ч30м, 1h 10m, 1ч 10м, 1h, 1ч, 10m, 10м или 1'
+                ),
+            )
             return
 
         self.on_add_entry(int(card_id), time_spent, description)
