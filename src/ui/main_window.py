@@ -1,5 +1,3 @@
-import os
-import sys
 import threading
 import tkinter as tk
 from tkinter import messagebox, ttk
@@ -7,7 +5,6 @@ from typing import List
 
 import pystray
 import schedule
-from PIL import Image
 
 from src.core.config import config
 from src.core.git_manager import GitManager
@@ -16,15 +13,7 @@ from src.core.work_calendar import WorkCalendar
 from src.ui.components import BranchTimeEntry, ManualTimeEntry, ScrollableFrame
 from src.ui.settings_window import SettingsWindow
 from src.utils.logger import logger
-
-
-def get_resource_path(relative_path):
-    if hasattr(sys, '_MEIPASS'):
-        base_path = sys._MEIPASS
-    else:
-        base_path = os.path.abspath('.')
-    return os.path.join(base_path, relative_path)
-
+from utils.resources import get_resource_path, safe_get_icon
 
 LOGO_PATH = get_resource_path('static\\clock.png')
 
@@ -34,11 +23,7 @@ class Application:
         self.window_visible = False
         self.root = None
 
-        try:
-            self.icon_image = Image.open(LOGO_PATH)
-        except Exception as e:
-            logger.warning(f'Не удалось загрузить иконку: {e}')
-            self.icon_image = Image.new('RGB', (70, 70), color='blue')
+        self.icon_image = safe_get_icon(LOGO_PATH, size=70)
 
         self.setup_window()
         self.setup_tray()
