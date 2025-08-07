@@ -13,7 +13,7 @@ SETTINGS_FILE = Path(os.getenv('APPDATA')) / 'KaitenTimeLogger' / 'settings.json
 class Config:
     kaiten_token: str = ''
     notification_time: str = '18:00'
-    git_repo_path: str = str(Path.cwd())
+    git_repo_path: str = ''
     kaiten_url: str = ''  # https://rtsoft-sg.kaiten.ru
     role_id: int = 0  # 6161
     working_time: float = 8.0  # Рабочее время в часах
