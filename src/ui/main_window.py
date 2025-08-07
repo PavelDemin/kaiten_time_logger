@@ -28,6 +28,22 @@ class Application:
         self.setup_scheduler()
         self._init_app()
         self.branch_entries: List[BranchTimeEntry] = []
+        self._check_config()
+
+    def _check_config(self):
+        if not config.is_configured():
+            result = messagebox.askokcancel(
+                'Инициализация приложения',
+                'Для работы приложения необходимо настроить:\n'
+                '• Токен Kaiten API\n'
+                '• URL сервера Kaiten\n'
+                '• Путь к Git репозиторию\n'
+                '• Роль пользователя\n\n'
+                'Открыть окно настроек?',
+                icon='question',
+            )
+            if result:
+                self.show_settings()
 
     def _init_app(self):
         try:
