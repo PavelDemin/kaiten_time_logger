@@ -1,5 +1,5 @@
 import tkinter as tk
-from tkinter import ttk
+from tkinter import messagebox, ttk
 from typing import Callable
 
 from PIL import ImageTk
@@ -126,16 +126,74 @@ class SettingsWindow(tk.Toplevel):
         save_button.pack(padx=5, pady=20)
 
     def save_settings(self):
-        Config.save_config(
-            self.token_var.get(),
-            self.time_var.get(),
-            self.repo_var.get(),
-            self.url_var.get(),
-            next(role_id for role_id, role_name in self.user_roles.items() if role_name == self.role_var.get()),
-            self.working_time_var.get(),
-        )
-        self.on_init_app()
-        self.destroy()
+        validation_errors = []
+
+        token = self.token_var.get().strip()
+        if not token:
+            validation_errors.append('• Kaiten API токен')
+
+        url = self.url_var.get().strip()
+        if not url:
+            validation_errors.append('• URL Kaiten')
+
+        repo_path = self.repo_var.get().strip()
+        if not repo_path:
+            validation_errors.append('• Путь до git репозитория')
+
+        role_name = self.role_var.get().strip()
+        if not role_name or role_name not in self.user_roles.values():
+            validation_errors.append('• Роль пользователя')
+
+        time_str = self.time_var.get().strip()
+        if not self._validate_time_format(time_str):
+            validation_errors.append('• Время уведомления (формат HH:MM)')
+
+        try:
+            working_time = self.working_time_var.get()
+            if working_time <= 0 or working_time > 24:
+                validation_errors.append('• Рабочее время (должно быть от 1 до 24 часов)')
+        except tk.TclError:
+            working_time = 8
+            validation_errors.append('• Рабочее время (должно быть числом)')
+
+        if validation_errors:
+            messagebox.showwarning(
+                'Ошибка валидации', 'Необходимо заполнить следующие поля:\n\n' + '\n'.join(validation_errors)
+            )
+            return
+
+        try:
+            role_id = next(
+                role_id for role_id, role_name in self.user_roles.items() if role_name == self.role_var.get()
+            )
+            Config.save_config(
+                token,
+                time_str,
+                repo_path,
+                url,
+                role_id,
+                working_time,
+            )
+            self.on_init_app()
+            self.destroy()
+        except StopIteration:
+            messagebox.showerror('Ошибка', 'Выбранная роль пользователя недействительна')
+        except Exception as e:
+            messagebox.showerror('Ошибка', f'Не удалось сохранить настройки: {e}')
+
+    def _validate_time_format(self, time_str: str) -> bool:
+        """Валидация формата времени HH:MM"""
+        if not time_str:
+            return False
+        try:
+            parts = time_str.split(':')
+            if len(parts) != 2:
+                return False
+            hours = int(parts[0])
+            minutes = int(parts[1])
+            return 0 <= hours <= 23 and 0 <= minutes <= 59
+        except ValueError:
+            return False
 
     def _update_user_roles(self, event=None):
         if not (self.token_var.get() and self.url_var.get()):
