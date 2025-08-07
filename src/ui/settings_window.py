@@ -44,6 +44,7 @@ class SettingsWindow(tk.Toplevel):
             style='Settings.TEntry',
         )
         token_entry.pack(padx=5, pady=5)
+        token_entry.bind('<FocusOut>', self._update_user_roles)
 
         url_label = ttk.Label(self, text='URL Kaiten:', style='Settings.TLabel')
         url_label.pack(padx=5, pady=5)
@@ -55,6 +56,7 @@ class SettingsWindow(tk.Toplevel):
             style='Settings.TEntry',
         )
         url_entry.pack(padx=5, pady=5)
+        url_entry.bind('<FocusOut>', self._update_user_roles)
 
         repo_label = ttk.Label(self, text='Путь до git репозитория:', style='Settings.TLabel')
         repo_label.pack(padx=5, pady=5)
@@ -136,9 +138,9 @@ class SettingsWindow(tk.Toplevel):
         self.on_init_app()
         self.destroy()
 
-    def _update_user_roles(self):
+    def _update_user_roles(self, event=None):
         kaiten_api = deepcopy(self.kaiten_api)
-        kaiten_api.base_url = self.url_var.get() + '/api/latest'
+        kaiten_api.base_url = self.url_var.get() + kaiten_api.API_VERSION_PATH
         kaiten_api.token = self.token_var.get()
 
         self.user_roles = kaiten_api.get_list_of_user_roles()

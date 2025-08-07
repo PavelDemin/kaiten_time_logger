@@ -6,9 +6,11 @@ from src.utils.logger import logger
 
 
 class KaitenAPI:
+    API_VERSION_PATH = '/api/latest'
+
     def __init__(self, token: str, kaiten_url: str, role_id: int):
         self.token = token
-        self.base_url = f'{kaiten_url}/api/latest'
+        self.base_url = kaiten_url + self.API_VERSION_PATH
         self.role_id = role_id
 
     @property
