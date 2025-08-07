@@ -51,8 +51,9 @@ class Application:
             return None
 
         for widget_class in ('Entry', 'TEntry', 'Text'):
-            self.root.bind_class(widget_class, '<Control-v>', _on_paste)
-            self.root.bind_class(widget_class, '<Control-V>', _on_paste)
+            self.root.bind_class(
+                widget_class, '<Control-KeyPress>', lambda e: _on_paste(e) if e.keycode == 86 else None
+            )
 
     def setup_window(self):
         self.root = tk.Tk()
