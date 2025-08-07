@@ -142,6 +142,6 @@ class SettingsWindow(tk.Toplevel):
             return
         kaiten_api = KaitenAPI.from_credentials(token=self.token_var.get(), base_url=self.url_var.get())
         self.user_roles = kaiten_api.get_list_of_user_roles()
-        self.role_combobox['values'] = sorted(role for role in self.user_roles.values())
+        self.role_combobox['values'] = sorted(self.user_roles.values())
         role = self.user_roles.get(config.role_id)
-        self.role_var.set(role if role else next((iter(sorted(self.user_roles.values()))), ''))
+        self.role_var.set(role if role else next(iter(self.role_combobox['values']), ''))
