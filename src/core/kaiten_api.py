@@ -6,12 +6,17 @@ from src.utils.logger import logger
 
 
 class KaitenAPI:
-    def __init__(self, token: str, kaiten_url: str, role_id: int):
+    API_VERSION_PATH = '/api/latest'
+
+    def __init__(self, token: str, kaiten_url: str, role_id: int = 0):
         self.token = token
-        self.base_url = f'{kaiten_url}/api/latest'
+        self.base_url = kaiten_url + self.API_VERSION_PATH
         self.role_id = role_id
-        self.headers = {
-            'Authorization': f'Bearer {token}',
+
+    @property
+    def headers(self):
+        return {
+            'Authorization': f'Bearer {self.token}',
             'Content-Type': 'application/json',
         }
 
@@ -38,9 +43,17 @@ class KaitenAPI:
             return False
 
     def get_list_of_user_roles(self) -> dict[id, str]:
-        response = requests.get(
-            f'{self.base_url}/user-roles',
-            headers=self.headers,
-        )
-        user_roles = response.json()
-        return {role['id']: role['name'] for role in user_roles}
+        try:
+            response = requests.get(
+                f'{self.base_url}/user-roles',
+                headers=self.headers,
+            )
+            user_roles = response.json()
+            return {role['id']: role['name'] for role in user_roles}
+        except requests.RequestException as e:
+            logger.error(f'Ошибка получения списка ролей в Kaiten: {e}')
+            return {}
+
+    @classmethod
+    def from_credentials(cls, token: str, base_url: str, role_id: int = 0) -> 'KaitenAPI':
+        return cls(token, base_url, role_id)

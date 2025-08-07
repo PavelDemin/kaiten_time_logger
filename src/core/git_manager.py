@@ -10,13 +10,18 @@ from git.objects import Commit
 
 class GitManager:
     def __init__(self, repo_path: Path):
-        self.repo = Repo(repo_path)
+        self.repo = Repo(repo_path) if repo_path else None
         self.current_user = self._get_current_user()
 
-    def _get_current_user(self) -> str:
-        return self.repo.config_reader().get_value('user', 'name')
+    def _get_current_user(self) -> str | None:
+        if self.repo:
+            return self.repo.config_reader().get_value('user', 'name')
+        return None
 
     def _get_todays_commits(self) -> Dict[str, List[Commit]]:
+        if not self.repo:
+            return {}
+
         tz = datetime.now().astimezone().tzinfo
         current_date = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0, tzinfo=tz)
         formatted_date = current_date.strftime('%Y-%m-%d %H:%M:%S.%f')

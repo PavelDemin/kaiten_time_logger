@@ -1,5 +1,3 @@
-import os
-import sys
 import threading
 import tkinter as tk
 from tkinter import messagebox, ttk
@@ -7,7 +5,6 @@ from typing import List
 
 import pystray
 import schedule
-from PIL import Image
 
 from src.core.config import config
 from src.core.git_manager import GitManager
@@ -16,15 +13,7 @@ from src.core.work_calendar import WorkCalendar
 from src.ui.components import BranchTimeEntry, ManualTimeEntry, ScrollableFrame
 from src.ui.settings_window import SettingsWindow
 from src.utils.logger import logger
-
-
-def get_resource_path(relative_path):
-    if hasattr(sys, '_MEIPASS'):
-        base_path = sys._MEIPASS
-    else:
-        base_path = os.path.abspath('.')
-    return os.path.join(base_path, relative_path)
-
+from src.utils.resources import get_resource_path, safe_get_icon
 
 LOGO_PATH = get_resource_path('static\\clock.png')
 
@@ -33,13 +22,7 @@ class Application:
     def __init__(self):
         self.window_visible = False
         self.root = None
-
-        try:
-            self.icon_image = Image.open(LOGO_PATH)
-        except Exception as e:
-            logger.warning(f'Не удалось загрузить иконку: {e}')
-            self.icon_image = Image.new('RGB', (70, 70), color='blue')
-
+        self.icon_image = safe_get_icon(LOGO_PATH, size=70)
         self.setup_window()
         self.setup_tray()
         self.setup_scheduler()
@@ -50,7 +33,7 @@ class Application:
         try:
             self.work_calendar = WorkCalendar()
             self.git_manager = GitManager(config.git_repo_path)
-            self.kaiten_api = KaitenAPI(config.kaiten_token, config.kaiten_url, config.role_id)
+            self.kaiten_api = KaitenAPI.from_credentials(config.kaiten_token, config.kaiten_url, config.role_id)
         except Exception as e:
             logger.error(f'Ошибка при инициализации менеджеров: {e}')
             messagebox.showerror('Ошибка', 'Не удалось инициализировать приложение. Проверьте настройки.')
@@ -68,8 +51,9 @@ class Application:
             return None
 
         for widget_class in ('Entry', 'TEntry', 'Text'):
-            self.root.bind_class(widget_class, '<Control-v>', _on_paste)
-            self.root.bind_class(widget_class, '<Control-V>', _on_paste)
+            self.root.bind_class(
+                widget_class, '<Control-KeyPress>', lambda e: _on_paste(e) if e.keycode == 86 else None
+            )
 
     def setup_window(self):
         self.root = tk.Tk()
@@ -224,7 +208,7 @@ class Application:
         self.root.withdraw()
 
     def show_settings(self):
-        SettingsWindow(self.root, self._init_app, self.kaiten_api.get_list_of_user_roles())
+        SettingsWindow(self.root, self._init_app, self.kaiten_api)
 
     def update_branch_entries(self):
         for entry in self.branch_entries:
