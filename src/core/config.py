@@ -34,6 +34,15 @@ class Config:
             except json.JSONDecodeError:
                 pass
 
+    def is_configured(self) -> bool:
+        return all(
+            [
+                self.kaiten_token.strip(),
+                self.kaiten_url.strip(),
+                self.git_repo_path.strip(),
+            ]
+        )
+
     def _save_settings_file(self) -> None:
         settings = {
             'notification_time': self.notification_time,
