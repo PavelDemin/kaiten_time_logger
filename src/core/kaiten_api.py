@@ -10,8 +10,11 @@ class KaitenAPI:
         self.token = token
         self.base_url = f'{kaiten_url}/api/latest'
         self.role_id = role_id
-        self.headers = {
-            'Authorization': f'Bearer {token}',
+
+    @property
+    def headers(self):
+        return {
+            'Authorization': f'Bearer {self.token}',
             'Content-Type': 'application/json',
         }
 
@@ -38,9 +41,12 @@ class KaitenAPI:
             return False
 
     def get_list_of_user_roles(self) -> dict[id, str]:
-        response = requests.get(
-            f'{self.base_url}/user-roles',
-            headers=self.headers,
-        )
-        user_roles = response.json()
-        return {role['id']: role['name'] for role in user_roles}
+        try:
+            response = requests.get(
+                f'{self.base_url}/user-roles',
+                headers=self.headers,
+            )
+            user_roles = response.json()
+            return {role['id']: role['name'] for role in user_roles}
+        except Exception as e:
+            return {}

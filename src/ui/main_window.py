@@ -209,7 +209,7 @@ class Application:
         self.root.withdraw()
 
     def show_settings(self):
-        SettingsWindow(self.root, self._init_app, self.kaiten_api.get_list_of_user_roles())
+        SettingsWindow(self.root, self._init_app, self.kaiten_api)
 
     def update_branch_entries(self):
         for entry in self.branch_entries:
