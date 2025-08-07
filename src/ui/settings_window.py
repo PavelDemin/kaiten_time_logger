@@ -3,11 +3,10 @@ from copy import deepcopy
 from tkinter import ttk
 from typing import Callable
 
-from PIL import Image, ImageTk
+from PIL import ImageTk
 
 from core.kaiten_api import KaitenAPI
 from src.core.config import Config, config
-from utils.logger import logger
 from utils.resources import get_resource_path, safe_get_icon
 
 

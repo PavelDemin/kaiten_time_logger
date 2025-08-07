@@ -48,5 +48,5 @@ class KaitenAPI:
             )
             user_roles = response.json()
             return {role['id']: role['name'] for role in user_roles}
-        except Exception as e:
+        except Exception:
             return {}
