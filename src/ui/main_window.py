@@ -13,7 +13,7 @@ from src.core.work_calendar import WorkCalendar
 from src.ui.components import BranchTimeEntry, ManualTimeEntry, ScrollableFrame
 from src.ui.settings_window import SettingsWindow
 from src.utils.logger import logger
-from utils.resources import get_resource_path, safe_get_icon
+from src.utils.resources import get_resource_path, safe_get_icon
 
 LOGO_PATH = get_resource_path('static\\clock.png')
 
@@ -22,9 +22,7 @@ class Application:
     def __init__(self):
         self.window_visible = False
         self.root = None
-
         self.icon_image = safe_get_icon(LOGO_PATH, size=70)
-
         self.setup_window()
         self.setup_tray()
         self.setup_scheduler()

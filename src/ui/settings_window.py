@@ -5,9 +5,9 @@ from typing import Callable
 
 from PIL import ImageTk
 
-from core.kaiten_api import KaitenAPI
 from src.core.config import Config, config
-from utils.resources import get_resource_path, safe_get_icon
+from src.core.kaiten_api import KaitenAPI
+from src.utils.resources import get_resource_path, safe_get_icon
 
 
 class SettingsWindow(tk.Toplevel):
@@ -18,10 +18,10 @@ class SettingsWindow(tk.Toplevel):
         self.user_roles = kaiten_api.get_list_of_user_roles()
 
         self.title('Настройки')
-        self.geometry('400x450')
+        self.geometry('400x540')
 
         window_width = 400
-        window_height = 530
+        window_height = 540
         screen_width = self.winfo_screenwidth()
         screen_height = self.winfo_screenheight()
         x = (screen_width - window_width) // 2
@@ -145,4 +145,4 @@ class SettingsWindow(tk.Toplevel):
         self.role_combobox['values'] = sorted(role for role in self.user_roles.values())
 
         role = self.user_roles.get(config.role_id)
-        self.role_var.set(role if role else next(iter(sorted(self.user_roles.values()))))
+        self.role_var.set(role if role else next((iter(sorted(self.user_roles.values()))), ''))
