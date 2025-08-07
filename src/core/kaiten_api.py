@@ -8,7 +8,7 @@ from src.utils.logger import logger
 class KaitenAPI:
     API_VERSION_PATH = '/api/latest'
 
-    def __init__(self, token: str, kaiten_url: str, role_id: int):
+    def __init__(self, token: str, kaiten_url: str, role_id: int = 0):
         self.token = token
         self.base_url = kaiten_url + self.API_VERSION_PATH
         self.role_id = role_id
@@ -53,3 +53,7 @@ class KaitenAPI:
         except requests.RequestException as e:
             logger.error(f'Ошибка получения списка ролей в Kaiten: {e}')
             return {}
+
+    @classmethod
+    def from_credentials(cls, token: str, base_url: str, role_id: int = 0) -> 'KaitenAPI':
+        return cls(token, base_url, role_id)

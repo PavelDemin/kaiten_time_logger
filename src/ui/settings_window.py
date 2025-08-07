@@ -1,5 +1,4 @@
 import tkinter as tk
-from copy import deepcopy
 from tkinter import ttk
 from typing import Callable
 
@@ -139,12 +138,10 @@ class SettingsWindow(tk.Toplevel):
         self.destroy()
 
     def _update_user_roles(self, event=None):
-        kaiten_api = deepcopy(self.kaiten_api)
-        kaiten_api.base_url = self.url_var.get() + kaiten_api.API_VERSION_PATH
-        kaiten_api.token = self.token_var.get()
-
+        if not (self.token_var.get() and self.url_var.get()):
+            return
+        kaiten_api = KaitenAPI.from_credentials(token=self.token_var.get(), base_url=self.url_var.get())
         self.user_roles = kaiten_api.get_list_of_user_roles()
         self.role_combobox['values'] = sorted(role for role in self.user_roles.values())
-
         role = self.user_roles.get(config.role_id)
         self.role_var.set(role if role else next((iter(sorted(self.user_roles.values()))), ''))
