@@ -12,21 +12,21 @@ permissions:
 jobs:
   test:
     runs-on: windows-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python 3.12
       uses: actions/setup-python@v5
       with:
         python-version: "3.12"
         cache: 'pip'
-    
+
     - name: Install uv
       run: |
         python -m pip install --upgrade pip
         pip install uv
-        
+
     - name: Setup uv cache
       uses: astral-sh/setup-uv@v6
       with:
@@ -42,29 +42,29 @@ jobs:
       run: |
         uv run ruff check .
         uv run ruff format --check .
-    
+
     - name: Test with pytest
       run: |
         uv run pytest
-        
+
   build:
     needs: test
     runs-on: windows-latest
-    
+
     steps:
     - uses: actions/checkout@v4
-    
+
     - name: Set up Python 3.12
       uses: actions/setup-python@v5
       with:
         python-version: "3.12"
         cache: 'pip'
-    
+
     - name: Install uv
       run: |
         python -m pip install --upgrade pip
         pip install uv
-        
+
     - name: Setup uv cache
       uses: astral-sh/setup-uv@v6
       with:
@@ -83,9 +83,10 @@ jobs:
                    --onefile `
                    --icon src/static/clock.png `
                    --add-data "src/static/clock.png;static" `
+                   --add-data "src/static/reload.png;static" `
                    --hidden-import holidays.countries `
                    src/main.py
-    
+
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
