@@ -48,5 +48,6 @@ class KaitenAPI:
             )
             user_roles = response.json()
             return {role['id']: role['name'] for role in user_roles}
-        except Exception:
+        except requests.RequestException as e:
+            logger.error(f'Ошибка получения списка ролей в Kaiten: {e}')
             return {}
