@@ -258,24 +258,6 @@ class Application:
     def show_settings(self):
         SettingsWindow(self.root, self._init_app, self.kaiten_api)
 
-    def update_branch_entries(self):
-        for entry in self.branch_entries:
-            entry.frame.destroy()
-        self.branch_entries.clear()
-
-        try:
-            branches_data = self.git_manager.get_branches_with_commits()
-            for branch_name, card_id, commits in branches_data:
-                entry = BranchTimeEntry(
-                    self.main_frame, branch_name, card_id, commits, on_time_change=self._update_total_time
-                )
-                self.branch_entries.append(entry)
-            logger.info(f'Найдено {len(self.branch_entries)} веток с коммитами')
-            self._update_total_time()
-        except Exception as e:
-            logger.error(f'Ошибка при обновлении списка веток: {e}')
-            messagebox.showerror('Ошибка', 'Не удалось получить список коммитов. Проверьте путь к репозиторию.')
-
     def _update_entries_with_data(self, branches_data, summaries: dict | None = None):
         for entry in self.branch_entries:
             entry.frame.destroy()

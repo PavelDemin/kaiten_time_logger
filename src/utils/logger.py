@@ -14,8 +14,9 @@ def setup_logger(name: str = 'kaiten_logger') -> logging.Logger:
     console_handler.setFormatter(formatter)
     logger.addHandler(console_handler)
 
-    log_dir = Path('../logs')
-    log_dir.mkdir(exist_ok=True)
+    project_root = Path(__file__).resolve().parents[2]
+    log_dir = project_root / 'logs'
+    log_dir.mkdir(parents=True, exist_ok=True)
 
     file_handler = logging.FileHandler(log_dir / 'kaiten_logger.log', encoding='utf-8')
     file_handler.setLevel(logging.DEBUG)
