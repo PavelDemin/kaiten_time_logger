@@ -4,9 +4,7 @@ import webbrowser
 from tkinter import messagebox, ttk
 from typing import Callable, List, Optional, Tuple
 
-from src.ai.summary_generator import summary_generator
 from src.core.config import config
-from src.utils.logger import logger
 
 CARD_ID_REGEX = re.compile(r'card/(\d+)|kaiten\.ru/(\d{6,})\b|^(\d{6,})$')
 
@@ -53,6 +51,46 @@ class ScrollableFrame(ttk.Frame):
         self.canvas.bind_all('<MouseWheel>', _on_mousewheel)
 
 
+class LoadingOverlay(ttk.Frame):
+    """Фрейм загрузки"""
+
+    def __init__(self, parent, text: str = 'Загрузка...', *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.configure(style='Main.TFrame')
+
+        self.place(relx=0.5, rely=0.5, anchor='center')
+        inner = ttk.Frame(self)
+        inner.pack()
+
+        self.progress = ttk.Progressbar(inner, mode='indeterminate', length=280)
+        self.progress.pack(pady=10)
+
+        self.label_var = tk.StringVar(value=text)
+        self.label = ttk.Label(inner, textvariable=self.label_var, style='Main.TLabel')
+        self.label.pack(pady=5)
+
+        self.hide()
+
+    def show(self, text: str | None = None):
+        if text is not None:
+            self.label_var.set(text)
+        self.lift()
+        self.place_configure(relx=0.5, rely=0.5, anchor='center')
+        self.progress.start(10)
+        self.update_idletasks()
+
+    def hide(self):
+        try:
+            self.progress.stop()
+        except Exception:
+            pass
+        self.place_forget()
+
+    def update_text(self, text: str):
+        self.label_var.set(text)
+        self.update_idletasks()
+
+
 class BranchTimeEntry(ttk.Frame):
     """Виджет для ввода времени, потраченного на работу в ветке."""
 
@@ -63,6 +101,7 @@ class BranchTimeEntry(ttk.Frame):
         card_id: int,
         commits: List[str],
         on_time_change: Callable = None,
+        summary_text: Optional[str] = None,
     ):
         self.card_id = card_id
         self.on_time_change = on_time_change
@@ -127,15 +166,15 @@ class BranchTimeEntry(ttk.Frame):
             pady=8,
         )
         self.commits_text.grid(row=0, column=0, sticky='ew')
-
-        for message in commits:
-            self.commits_text.insert(tk.END, f'{message}\n')
-
         scrollbar = tk.Scrollbar(commits_frame, orient='vertical', command=self.commits_text.yview)
         self.commits_text.config(yscrollcommand=scrollbar.set)
         scrollbar.grid(row=0, column=1, sticky='ns')
 
-        self._generate_ai_summary(commits)
+        if summary_text is not None and summary_text.strip():
+            self.commits_text.insert(tk.END, f'{summary_text.strip()}\n')
+        else:
+            for message in commits:
+                self.commits_text.insert(tk.END, f'{message}\n')
 
         time_frame = ttk.Frame(self.frame)
         time_frame.grid(row=2, column=0, sticky='w', padx=15, pady=(0, 10))
@@ -147,40 +186,6 @@ class BranchTimeEntry(ttk.Frame):
         self.time_var.trace('w', self._on_time_change)
         time_entry = ttk.Entry(time_frame, textvariable=self.time_var, width=10, font=('Segoe UI', 10))
         time_entry.pack(side=tk.LEFT, padx=5)
-
-    def _generate_ai_summary(self, commits: List[str]) -> None:
-        if not config.ai_enabled or not summary_generator.is_enabled():
-            return
-        if not commits:
-            return
-        try:
-            # Запускаем генерацию в отдельном потоке чтобы не блокировать UI
-            import threading
-
-            def generate():
-                try:
-                    summary = summary_generator.generate_task_summary(commits)
-                    if summary:
-                        # Обновляем UI в главном потоке
-                        self.commits_text.after(0, func=lambda: self._update_commits_with_summary(summary))
-                except Exception as err:
-                    logger.error(f'Ошибка генерации описания: {err}')
-
-            thread = threading.Thread(target=generate, daemon=True)
-            thread.start()
-
-        except Exception as e:
-            logger.error(f'Ошибка запуска генерации описания: {e}')
-
-    def _update_commits_with_summary(self, summary: str) -> None:
-        """Обновляет текст коммитов добавляя описание в начало"""
-        self.commits_text.delete('1.0', tk.END)
-        self.commits_text.insert('1.0', summary)
-
-        # Увеличиваем высоту чтобы поместилось описание
-        current_height = int(self.commits_text.cget('height'))
-        new_height = max(current_height, len(summary.split('\n')))
-        self.commits_text.config(height=min(new_height, 10))  # Максимум 10 строк
 
     def _on_time_change(self, *args):
         if self.on_time_change:

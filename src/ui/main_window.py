@@ -1,16 +1,17 @@
 import threading
 import tkinter as tk
 from tkinter import messagebox, ttk
-from typing import List
+from typing import List, Tuple
 
 import pystray
 import schedule
 
+from src.ai.summary_generator import summary_generator
 from src.core.config import config
 from src.core.git_manager import GitManager
 from src.core.kaiten_api import KaitenAPI
 from src.core.work_calendar import WorkCalendar
-from src.ui.components import BranchTimeEntry, ManualTimeEntry, ScrollableFrame
+from src.ui.components import BranchTimeEntry, LoadingOverlay, ManualTimeEntry, ScrollableFrame
 from src.ui.settings_window import SettingsWindow
 from src.utils.logger import logger
 from src.utils.resources import get_resource_path, safe_get_icon
@@ -50,10 +51,6 @@ class Application:
             self.work_calendar = WorkCalendar()
             self.git_manager = GitManager(config.git_repo_path)
             self.kaiten_api = KaitenAPI.from_credentials(config.kaiten_token, config.kaiten_url, config.role_id)
-
-            # Переинициализируем AI генератор после изменения настроек
-            from src.ai.summary_generator import summary_generator
-
             summary_generator.reinitialize()
 
         except Exception as e:
@@ -105,17 +102,10 @@ class Application:
         except Exception as e:
             logger.warning(f'Не удалось установить иконку окна: {e}')
 
-        self.loading_frame = ttk.Frame(self.root)
-        self.loading_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-
-        center_frame = ttk.Frame(self.loading_frame)
-        center_frame.place(relx=0.5, rely=0.5, anchor='center')
-
-        self.spinner = ttk.Progressbar(center_frame, mode='indeterminate', length=300)
-        self.spinner.pack(pady=20)
-
-        self.loading_label = ttk.Label(center_frame, text='Загрузка коммитов...', style='Main.TLabel')
-        self.loading_label.pack(pady=10)
+        # Универсальный оверлей загрузки
+        self.loading_container = ttk.Frame(self.root)
+        self.loading_container.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        self.loading_overlay = LoadingOverlay(self.loading_container, text='Загрузка коммитов...')
 
         self.main_frame = ScrollableFrame(self.root)
         self.manual_entry = ManualTimeEntry(
@@ -205,25 +195,61 @@ class Application:
         if not self.window_visible and self.work_calendar.should_show_notification(config.notification_time):
             self.show_window()
 
+    def _load_commits(self) -> List[Tuple[str, int, List[str]]]:
+        self.loading_overlay.show('Загрузка коммитов...')
+        try:
+            branches_data = self.git_manager.get_branches_with_commits()
+        except Exception as e:
+            logger.error(f'Ошибка при получении коммитов: {e}')
+
+            def on_error():
+                self.loading_overlay.hide()
+                self.loading_container.pack_forget()
+                messagebox.showerror('Ошибка', 'Не удалось получить список коммитов. Проверьте путь к репозиторию.')
+
+            self.root.after(0, on_error)
+            branches_data = []
+        return branches_data
+
+    def _render(self, branches_data, summaries):
+        # Скрываем загрузку, показываем основной UI и строим записи
+        self.loading_overlay.hide()
+        self.loading_container.pack_forget()
+        self.main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
+        self.buttons_frame.pack(fill=tk.X, padx=10, pady=5, side=tk.BOTTOM)
+        self._update_entries_with_data(branches_data, summaries)
+        self.root.focus_force()
+
     def show_window(self):
         if not self.window_visible:
             self.window_visible = True
             self.root.deiconify()
             self.root.lift()
 
-            self.loading_frame.pack(fill=tk.BOTH, expand=True)
+            self.loading_container.pack(fill=tk.BOTH, expand=True)
             self.main_frame.pack_forget()
             self.buttons_frame.pack_forget()
-            self.spinner.start(10)
+            branches_data = self._load_commits()
+            summaries = self._generate_ai_summary(branches_data)
+            self.root.after(0, lambda: self._render(branches_data, summaries))
 
-            def load_commits():
-                self.update_branch_entries()
-                self.loading_frame.pack_forget()
-                self.main_frame.pack(fill=tk.BOTH, expand=True, padx=10, pady=10)
-                self.buttons_frame.pack(fill=tk.X, padx=10, pady=5, side=tk.BOTTOM)
-                self.root.focus_force()
-
-            threading.Thread(target=load_commits, daemon=True).start()
+    def _generate_ai_summary(self, branches_data: List[Tuple[str, int, List[str]]]) -> dict[tuple, str]:
+        # Если включен AI — сначала генерируем описания, потом рисуем форму
+        summaries = {}
+        try:
+            if summary_generator.is_available:
+                total = len(branches_data)
+                for idx, (branch_name, card_id, commits) in enumerate(branches_data, start=1):
+                    self.root.after(0, self.loading_overlay.update_text, f'Генерация описаний {idx}/{total}...')
+                    try:
+                        summary = summary_generator.generate_task_summary(commits)
+                    except Exception as e:
+                        logger.error(f'Ошибка генерации описания для {branch_name}: {e}')
+                        summary = None
+                    summaries[(branch_name, card_id)] = summary
+        except Exception as ai_err:
+            logger.error(f'Ошибка процесса AI генерации: {ai_err}')
+        return summaries
 
     def hide_window(self):
         self.window_visible = False
@@ -249,6 +275,27 @@ class Application:
         except Exception as e:
             logger.error(f'Ошибка при обновлении списка веток: {e}')
             messagebox.showerror('Ошибка', 'Не удалось получить список коммитов. Проверьте путь к репозиторию.')
+
+    def _update_entries_with_data(self, branches_data, summaries: dict | None = None):
+        for entry in self.branch_entries:
+            entry.frame.destroy()
+        self.branch_entries.clear()
+
+        for branch_name, card_id, commits in branches_data:
+            summary_text = None
+            if summaries:
+                summary_text = summaries.get((branch_name, card_id))
+            entry = BranchTimeEntry(
+                self.main_frame,
+                branch_name,
+                card_id,
+                commits,
+                on_time_change=self._update_total_time,
+                summary_text=summary_text if summary_text else None,
+            )
+            self.branch_entries.append(entry)
+        logger.info(f'Найдено {len(self.branch_entries)} веток с коммитами')
+        self._update_total_time()
 
     def save_time_logs(self):
         success_count = 0
