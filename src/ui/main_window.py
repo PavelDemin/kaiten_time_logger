@@ -50,6 +50,12 @@ class Application:
             self.work_calendar = WorkCalendar()
             self.git_manager = GitManager(config.git_repo_path)
             self.kaiten_api = KaitenAPI.from_credentials(config.kaiten_token, config.kaiten_url, config.role_id)
+
+            # Переинициализируем AI генератор после изменения настроек
+            from src.ai.summary_generator import summary_generator
+
+            summary_generator.reinitialize()
+
         except Exception as e:
             logger.error(f'Ошибка при инициализации менеджеров: {e}')
             messagebox.showerror('Ошибка', 'Не удалось инициализировать приложение. Проверьте настройки.')

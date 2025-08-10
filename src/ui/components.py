@@ -4,7 +4,9 @@ import webbrowser
 from tkinter import messagebox, ttk
 from typing import Callable, List, Optional, Tuple
 
+from src.ai.summary_generator import summary_generator
 from src.core.config import config
+from src.utils.logger import logger
 
 CARD_ID_REGEX = re.compile(r'card/(\d+)|kaiten\.ru/(\d{6,})\b|^(\d{6,})$')
 
@@ -133,6 +135,8 @@ class BranchTimeEntry(ttk.Frame):
         self.commits_text.config(yscrollcommand=scrollbar.set)
         scrollbar.grid(row=0, column=1, sticky='ns')
 
+        self._generate_ai_summary(commits)
+
         time_frame = ttk.Frame(self.frame)
         time_frame.grid(row=2, column=0, sticky='w', padx=15, pady=(0, 10))
 
@@ -143,6 +147,40 @@ class BranchTimeEntry(ttk.Frame):
         self.time_var.trace('w', self._on_time_change)
         time_entry = ttk.Entry(time_frame, textvariable=self.time_var, width=10, font=('Segoe UI', 10))
         time_entry.pack(side=tk.LEFT, padx=5)
+
+    def _generate_ai_summary(self, commits: List[str]) -> None:
+        if not config.ai_enabled or not summary_generator.is_enabled():
+            return
+        if not commits:
+            return
+        try:
+            # Запускаем генерацию в отдельном потоке чтобы не блокировать UI
+            import threading
+
+            def generate():
+                try:
+                    summary = summary_generator.generate_task_summary(commits)
+                    if summary:
+                        # Обновляем UI в главном потоке
+                        self.commits_text.after(0, func=lambda: self._update_commits_with_summary(summary))
+                except Exception as err:
+                    logger.error(f'Ошибка генерации описания: {err}')
+
+            thread = threading.Thread(target=generate, daemon=True)
+            thread.start()
+
+        except Exception as e:
+            logger.error(f'Ошибка запуска генерации описания: {e}')
+
+    def _update_commits_with_summary(self, summary: str) -> None:
+        """Обновляет текст коммитов добавляя описание в начало"""
+        self.commits_text.delete('1.0', tk.END)
+        self.commits_text.insert('1.0', summary)
+
+        # Увеличиваем высоту чтобы поместилось описание
+        current_height = int(self.commits_text.cget('height'))
+        new_height = max(current_height, len(summary.split('\n')))
+        self.commits_text.config(height=min(new_height, 10))  # Максимум 10 строк
 
     def _on_time_change(self, *args):
         if self.on_time_change:
