@@ -38,13 +38,15 @@ class SummaryGenerator:
             logger.error(f'Ошибка инициализации AI провайдера: {e}')
             self._llm_provider = None
 
+    @property
     def is_enabled(self) -> bool:
         """Проверяет, включена ли генерация описаний"""
         return config.ai_enabled and self._llm_provider is not None
 
+    @property
     def is_available(self) -> bool:
         """Проверяет доступность LLM провайдера"""
-        return self.is_enabled() and self._llm_provider.is_available()
+        return self.is_enabled and self._llm_provider.is_available()
 
     def generate_task_summary(self, commits: List[str]) -> Optional[str]:
         """
@@ -56,7 +58,7 @@ class SummaryGenerator:
         Returns:
             Сгенерированное описание или None
         """
-        if not self.is_enabled():
+        if not self.is_enabled:
             logger.debug('Генерация описаний отключена или провайдер не инициализирован')
             return None
 
