@@ -7,6 +7,10 @@ def setup_logger(name: str = 'kaiten_logger') -> logging.Logger:
     logger = logging.getLogger(name)
     logger.setLevel(logging.DEBUG)
 
+    if logger.handlers:
+        logger.propagate = False
+        return logger
+
     formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
 
     console_handler = logging.StreamHandler(sys.stdout)
@@ -23,6 +27,7 @@ def setup_logger(name: str = 'kaiten_logger') -> logging.Logger:
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
 
+    logger.propagate = False
     return logger
 
 
