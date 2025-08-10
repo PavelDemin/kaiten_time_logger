@@ -6,7 +6,7 @@ from typing import List, Tuple
 import pystray
 import schedule
 
-from src.ai.summary_generator import summary_generator
+from src.ai.summary_generator import SummaryGenerator
 from src.core.config import config
 from src.core.git_manager import GitManager
 from src.core.kaiten_api import KaitenAPI
@@ -24,6 +24,7 @@ class Application:
         self.window_visible = False
         self.root = None
         self.icon_image = safe_get_icon(LOGO_PATH, size=70)
+        self.summary_generator = SummaryGenerator()
         self.setup_window()
         self.setup_tray()
         self.setup_scheduler()
@@ -51,7 +52,7 @@ class Application:
             self.work_calendar = WorkCalendar()
             self.git_manager = GitManager(config.git_repo_path)
             self.kaiten_api = KaitenAPI.from_credentials(config.kaiten_token, config.kaiten_url, config.role_id)
-            summary_generator.reinitialize()
+            self.summary_generator.reinitialize()
 
         except Exception as e:
             logger.error(f'Ошибка при инициализации менеджеров: {e}')
@@ -237,12 +238,12 @@ class Application:
         # Если включен AI — сначала генерируем описания, потом рисуем форму
         summaries = {}
         try:
-            if summary_generator.is_available:
+            if self.summary_generator.is_available:
                 total = len(branches_data)
                 for idx, (branch_name, card_id, commits) in enumerate(branches_data, start=1):
                     self.root.after(0, self.loading_overlay.update_text, f'Генерация описаний {idx}/{total}...')
                     try:
-                        summary = summary_generator.generate_task_summary(commits)
+                        summary = self.summary_generator.generate_task_summary(commits)
                     except Exception as e:
                         logger.error(f'Ошибка генерации описания для {branch_name}: {e}')
                         summary = None

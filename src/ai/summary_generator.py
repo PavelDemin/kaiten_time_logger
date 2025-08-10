@@ -89,6 +89,3 @@ class SummaryGenerator:
         """Переинициализирует провайдера (например, после изменения настроек)"""
         logger.info('Переинициализация AI провайдера')
         self._initialize_provider()
-
-
-summary_generator = SummaryGenerator()
