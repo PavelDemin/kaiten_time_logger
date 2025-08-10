@@ -22,9 +22,9 @@ class SummaryGenerator:
 
         try:
             if config.ai_provider == AiProvider.yandex:
-                if config.yandex_api_key and config.yandex_folder_id:
+                if config.ai_api_key and config.ai_folder_id:
                     self._llm_provider = YandexGPTProvider(
-                        api_key=config.yandex_api_key, folder_id=config.yandex_folder_id, model=config.ai_model
+                        api_key=config.ai_api_key, folder_id=config.ai_folder_id, model=config.ai_model
                     )
                     logger.info('Yandex GPT провайдер инициализирован')
                 else:

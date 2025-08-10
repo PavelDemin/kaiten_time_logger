@@ -23,18 +23,20 @@ class Config:
     ai_provider: str = AiProvider.yandex
     ai_model: str = 'yandexgpt-lite'
     ai_language: str = 'ru'  # ru, en
-    yandex_api_key: str = ''
-    yandex_folder_id: str = ''
+    ai_api_key: str = ''
+    ai_folder_id: str = ''
 
     def __post_init__(self):
         SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
-        stored_token = keyring.get_password(KEYRING_SERVICE, 'kaiten_token')
-        if stored_token:
-            self.kaiten_token = stored_token
+        if self.ai_enabled:
+            if self.ai_provider == AiProvider.yandex:
+                stored_token = keyring.get_password(KEYRING_SERVICE, 'kaiten_token')
+                if stored_token:
+                    self.kaiten_token = stored_token
 
-        stored_yandex_key = keyring.get_password(KEYRING_SERVICE, 'yandex_api_key')
-        if stored_yandex_key:
-            self.yandex_api_key = stored_yandex_key
+                stored_yandex_key = keyring.get_password(KEYRING_SERVICE, 'yandex_api_key')
+                if stored_yandex_key:
+                    self.ai_api_key = stored_yandex_key
 
         if SETTINGS_FILE.exists():
             try:
@@ -48,7 +50,7 @@ class Config:
                 self.ai_provider = settings.get('ai_provider', self.ai_provider)
                 self.ai_model = settings.get('ai_model', self.ai_model)
                 self.ai_language = settings.get('ai_language', self.ai_language)
-                self.yandex_folder_id = settings.get('yandex_folder_id', self.yandex_folder_id)
+                self.ai_folder_id = settings.get('ai_folder_id', self.ai_folder_id)
             except json.JSONDecodeError:
                 pass
 
@@ -72,7 +74,7 @@ class Config:
             'ai_provider': self.ai_provider,
             'ai_model': self.ai_model,
             'ai_language': self.ai_language,
-            'yandex_folder_id': self.yandex_folder_id,
+            'ai_folder_id': self.ai_folder_id,
         }
         SETTINGS_FILE.write_text(json.dumps(settings, indent=2), encoding='utf-8')
 
@@ -86,8 +88,8 @@ class Config:
         role_id: int,
         working_time: float,
         ai_enabled: bool = None,
-        yandex_api_key: str = None,
-        yandex_folder_id: str = None,
+        ai_api_key: str = None,
+        ai_folder_id: str = None,
         ai_provider: str = None,
     ) -> None:
         keyring.set_password(KEYRING_SERVICE, 'kaiten_token', token)
@@ -102,17 +104,12 @@ class Config:
             config.ai_provider = ai_provider
         if ai_enabled is not None:
             config.ai_enabled = ai_enabled
-        if yandex_api_key is not None:
-            config.yandex_api_key = yandex_api_key
-            if yandex_api_key:
-                keyring.set_password(KEYRING_SERVICE, 'yandex_api_key', yandex_api_key)
-            else:
-                try:
-                    keyring.delete_password(KEYRING_SERVICE, 'yandex_api_key')
-                except keyring.errors.PasswordDeleteError:
-                    pass
-        if yandex_folder_id is not None:
-            config.yandex_folder_id = yandex_folder_id
+        if ai_api_key is not None:
+            config.ai_api_key = ai_api_key
+            if config.ai_provider == AiProvider.yandex:
+                keyring.set_password(KEYRING_SERVICE, 'yandex_api_key', ai_api_key)
+        if ai_folder_id is not None:
+            config.ai_folder_id = ai_folder_id
 
         config._save_settings_file()
 

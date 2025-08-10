@@ -192,7 +192,7 @@ class SettingsWindow(tk.Toplevel):
         if provider == AiProvider.yandex:
             yandex_key_label = ttk.Label(self.ai_provider_fields, text='Yandex API ключ:', style='Settings.TLabel')
             yandex_key_label.pack(pady=(0, 4), anchor='w')
-            self.yandex_api_key_var = tk.StringVar(value=config.yandex_api_key)
+            self.yandex_api_key_var = tk.StringVar(value=config.ai_api_key)
             yandex_key_entry = ttk.Entry(
                 self.ai_provider_fields,
                 textvariable=self.yandex_api_key_var,
@@ -204,7 +204,7 @@ class SettingsWindow(tk.Toplevel):
 
             folder_id_label = ttk.Label(self.ai_provider_fields, text='Yandex Folder ID:', style='Settings.TLabel')
             folder_id_label.pack(pady=(2, 4), anchor='w')
-            self.yandex_folder_id_var = tk.StringVar(value=config.yandex_folder_id)
+            self.yandex_folder_id_var = tk.StringVar(value=config.ai_folder_id)
             folder_id_entry = ttk.Entry(
                 self.ai_provider_fields,
                 textvariable=self.yandex_folder_id_var,
@@ -284,12 +284,14 @@ class SettingsWindow(tk.Toplevel):
 
         ai_provider = getattr(self, 'ai_provider_var', tk.StringVar(value=AiProvider.yandex)).get()
         ai_enabled = getattr(self, 'ai_enabled_var', tk.BooleanVar(value=False)).get()
+        ai_api_key = None
+        ai_folder_id = None
         if ai_enabled and ai_provider == AiProvider.yandex:
-            yandex_key = getattr(self, 'yandex_api_key_var', tk.StringVar(value='')).get().strip()
-            folder_id = getattr(self, 'yandex_folder_id_var', tk.StringVar(value='')).get().strip()
-            if not yandex_key:
+            ai_api_key = getattr(self, 'yandex_api_key_var', tk.StringVar(value='')).get().strip()
+            ai_folder_id = getattr(self, 'yandex_folder_id_var', tk.StringVar(value='')).get().strip()
+            if not ai_api_key:
                 validation_errors.append('• Yandex API ключ (для AI)')
-            if not folder_id:
+            if not ai_folder_id:
                 validation_errors.append('• Yandex Folder ID (для AI)')
 
         if validation_errors:
@@ -310,8 +312,8 @@ class SettingsWindow(tk.Toplevel):
                 role_id=role_id,
                 working_time=working_time,
                 ai_enabled=ai_enabled,
-                yandex_api_key=getattr(self, 'yandex_api_key_var', tk.StringVar(value='')).get(),
-                yandex_folder_id=getattr(self, 'yandex_folder_id_var', tk.StringVar(value='')).get(),
+                ai_api_key=ai_api_key,
+                ai_folder_id=ai_folder_id,
                 ai_provider=ai_provider,
             )
             self.on_init_app()
