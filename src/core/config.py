@@ -28,16 +28,6 @@ class Config:
 
     def __post_init__(self):
         SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
-        if self.ai_enabled:
-            if self.ai_provider == AiProvider.yandex:
-                stored_token = keyring.get_password(KEYRING_SERVICE, 'kaiten_token')
-                if stored_token:
-                    self.kaiten_token = stored_token
-
-                stored_yandex_key = keyring.get_password(KEYRING_SERVICE, 'yandex_api_key')
-                if stored_yandex_key:
-                    self.ai_api_key = stored_yandex_key
-
         if SETTINGS_FILE.exists():
             try:
                 settings = json.loads(SETTINGS_FILE.read_text(encoding='utf-8'))
@@ -53,6 +43,14 @@ class Config:
                 self.ai_folder_id = settings.get('ai_folder_id', self.ai_folder_id)
             except json.JSONDecodeError:
                 pass
+        stored_token = keyring.get_password(KEYRING_SERVICE, 'kaiten_token')
+        if stored_token:
+            self.kaiten_token = stored_token
+        if self.ai_enabled:
+            if self.ai_provider == AiProvider.yandex:
+                stored_yandex_key = keyring.get_password(KEYRING_SERVICE, 'yandex_api_key')
+                if stored_yandex_key:
+                    self.ai_api_key = stored_yandex_key
 
     def is_configured(self) -> bool:
         return all(
