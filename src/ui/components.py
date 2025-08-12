@@ -51,6 +51,46 @@ class ScrollableFrame(ttk.Frame):
         self.canvas.bind_all('<MouseWheel>', _on_mousewheel)
 
 
+class LoadingOverlay(ttk.Frame):
+    """Фрейм загрузки"""
+
+    def __init__(self, parent, text: str = 'Загрузка...', *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        self.configure(style='Main.TFrame')
+
+        self.place(relx=0.5, rely=0.5, anchor='center')
+        inner = ttk.Frame(self)
+        inner.pack()
+
+        self.progress = ttk.Progressbar(inner, mode='indeterminate', length=280)
+        self.progress.pack(pady=10)
+
+        self.label_var = tk.StringVar(value=text)
+        self.label = ttk.Label(inner, textvariable=self.label_var, style='Main.TLabel')
+        self.label.pack(pady=5)
+
+        self.hide()
+
+    def show(self, text: str | None = None):
+        if text is not None:
+            self.label_var.set(text)
+        self.lift()
+        self.place_configure(relx=0.5, rely=0.5, anchor='center')
+        self.progress.start(10)
+        self.update_idletasks()
+
+    def hide(self):
+        try:
+            self.progress.stop()
+        except Exception:
+            pass
+        self.place_forget()
+
+    def update_text(self, text: str):
+        self.label_var.set(text)
+        self.update_idletasks()
+
+
 class BranchTimeEntry(ttk.Frame):
     """Виджет для ввода времени, потраченного на работу в ветке."""
 
@@ -61,6 +101,7 @@ class BranchTimeEntry(ttk.Frame):
         card_id: int,
         commits: List[str],
         on_time_change: Callable = None,
+        summary_text: Optional[str] = None,
     ):
         self.card_id = card_id
         self.on_time_change = on_time_change
@@ -125,13 +166,15 @@ class BranchTimeEntry(ttk.Frame):
             pady=8,
         )
         self.commits_text.grid(row=0, column=0, sticky='ew')
-
-        for message in commits:
-            self.commits_text.insert(tk.END, f'{message}\n')
-
         scrollbar = tk.Scrollbar(commits_frame, orient='vertical', command=self.commits_text.yview)
         self.commits_text.config(yscrollcommand=scrollbar.set)
         scrollbar.grid(row=0, column=1, sticky='ns')
+
+        if summary_text is not None and summary_text.strip():
+            self.commits_text.insert(tk.END, f'{summary_text.strip()}\n')
+        else:
+            for message in commits:
+                self.commits_text.insert(tk.END, f'{message}\n')
 
         time_frame = ttk.Frame(self.frame)
         time_frame.grid(row=2, column=0, sticky='w', padx=15, pady=(0, 10))

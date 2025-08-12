@@ -5,6 +5,8 @@ from pathlib import Path
 
 import keyring
 
+from src.ai.constants import AiProvider
+
 KEYRING_SERVICE = 'kaiten_time_logger'
 SETTINGS_FILE = Path(os.getenv('APPDATA')) / 'KaitenTimeLogger' / 'settings.json'
 
@@ -17,12 +19,15 @@ class Config:
     kaiten_url: str = ''  # https://rtsoft-sg.kaiten.ru
     role_id: int = 0  # 6161
     working_time: float = 8.0  # Рабочее время в часах
+    ai_enabled: bool = False
+    ai_provider: str = AiProvider.yandex
+    ai_model: str = 'yandexgpt-lite'
+    ai_language: str = 'ru'  # ru, en
+    ai_api_key: str = ''
+    ai_folder_id: str = ''
 
     def __post_init__(self):
         SETTINGS_FILE.parent.mkdir(parents=True, exist_ok=True)
-        stored_token = keyring.get_password(KEYRING_SERVICE, 'kaiten_token')
-        if stored_token:
-            self.kaiten_token = stored_token
         if SETTINGS_FILE.exists():
             try:
                 settings = json.loads(SETTINGS_FILE.read_text(encoding='utf-8'))
@@ -31,8 +36,21 @@ class Config:
                 self.kaiten_url = settings.get('kaiten_url', self.kaiten_url)
                 self.role_id = settings.get('role_id', self.role_id)
                 self.working_time = settings.get('working_time', self.working_time)
+                self.ai_enabled = settings.get('ai_enabled', self.ai_enabled)
+                self.ai_provider = settings.get('ai_provider', self.ai_provider)
+                self.ai_model = settings.get('ai_model', self.ai_model)
+                self.ai_language = settings.get('ai_language', self.ai_language)
+                self.ai_folder_id = settings.get('ai_folder_id', self.ai_folder_id)
             except json.JSONDecodeError:
                 pass
+        stored_token = keyring.get_password(KEYRING_SERVICE, 'kaiten_token')
+        if stored_token:
+            self.kaiten_token = stored_token
+        if self.ai_enabled:
+            if self.ai_provider == AiProvider.yandex:
+                stored_yandex_key = keyring.get_password(KEYRING_SERVICE, 'yandex_api_key')
+                if stored_yandex_key:
+                    self.ai_api_key = stored_yandex_key
 
     def is_configured(self) -> bool:
         return all(
@@ -50,12 +68,27 @@ class Config:
             'kaiten_url': self.kaiten_url,
             'role_id': self.role_id,
             'working_time': self.working_time,
+            'ai_enabled': self.ai_enabled,
+            'ai_provider': self.ai_provider,
+            'ai_model': self.ai_model,
+            'ai_language': self.ai_language,
+            'ai_folder_id': self.ai_folder_id,
         }
         SETTINGS_FILE.write_text(json.dumps(settings, indent=2), encoding='utf-8')
 
     @classmethod
     def save_config(
-        cls, token: str, time: str, repo_path: str, kaiten_url: str, role_id: int, working_time: float
+        cls,
+        token: str,
+        time: str,
+        repo_path: str,
+        kaiten_url: str,
+        role_id: int,
+        working_time: float,
+        ai_enabled: bool = None,
+        ai_api_key: str = None,
+        ai_folder_id: str = None,
+        ai_provider: str = None,
     ) -> None:
         keyring.set_password(KEYRING_SERVICE, 'kaiten_token', token)
         config.kaiten_token = token
@@ -64,6 +97,18 @@ class Config:
         config.kaiten_url = kaiten_url
         config.role_id = role_id
         config.working_time = working_time
+
+        if ai_provider is not None:
+            config.ai_provider = ai_provider
+        if ai_enabled is not None:
+            config.ai_enabled = ai_enabled
+        if ai_api_key is not None:
+            config.ai_api_key = ai_api_key
+            if config.ai_provider == AiProvider.yandex:
+                keyring.set_password(KEYRING_SERVICE, 'yandex_api_key', ai_api_key)
+        if ai_folder_id is not None:
+            config.ai_folder_id = ai_folder_id
+
         config._save_settings_file()
 
 
